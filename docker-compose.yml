@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  real_iot_front:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - iotnet
+
+  real_iot:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose:
+      - "5000"
+    networks:
+      - iotnet
+
+  honeypot_front:
+    image: beelzebub
+    ports:          
+      - "5002:80"
+    volumes:
+      - ./honeypot/beelzebub/configurations:/configurations
+    command:
+      - -confCore
+      - /configurations/beelzebub.yaml
+    networks:
+      - iotnet
+
+  honeypot:
+    image: beelzebub
+    expose:
+      - "22"
+      - "80"
+    volumes:
+      - ./honeypot/beelzebub/configurations:/configurations
+    command:
+      - -confCore
+      - /configurations/beelzebub.yaml
+    networks:
+      - iotnet
+  
+  dummy_iot_front:
+    build:
+      context: .
+      dockerfile: docker/dummy.Dockerfile
+    ports:
+      - "5001:5001"      
+    networks:
+      - iotnet
+
+  dummy_iot:
+    build:
+      context: .
+      dockerfile: docker/dummy.Dockerfile
+    expose:
+      - "5001"
+    networks:
+      - iotnet
+
+networks:
+  iotnet:
