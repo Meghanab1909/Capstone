@@ -1,0 +1,15 @@
+[*] Capturing Phase-0 traffic...
+Traceback (most recent call last):
+  File "/home/meghana/iot-honeynet/ai_engine/detect.py", line 71, in <module>
+    sniff(prn=process_packet, store=0)
+  File "/home/meghana/iot-honeynet/venv/lib/python3.12/site-packages/scapy/sendrecv.py", line 1438, in sniff
+    sniffer._run(*args, **kwargs)
+  File "/home/meghana/iot-honeynet/venv/lib/python3.12/site-packages/scapy/sendrecv.py", line 1283, in _run
+    sniff_sockets[_RL2(iface)(type=ETH_P_ALL, iface=iface,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/meghana/iot-honeynet/venv/lib/python3.12/site-packages/scapy/arch/linux/__init__.py", line 219, in __init__
+    self.ins = socket.socket(
+               ^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 233, in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+PermissionError: [Errno 1] Operation not permitted

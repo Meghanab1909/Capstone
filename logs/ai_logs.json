@@ -1,0 +1,654 @@
+[
+  {
+    "timestamp": "2026-02-06T08:10:33.852632",
+    "stage": "System",
+    "message": "Starting AI analysis pipeline",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:33.852680",
+    "stage": "Hybrid Dataset",
+    "message": "Combining TON-IoT and Phase-1 data",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:33.852695",
+    "stage": "Training Data",
+    "message": "Loading TON-IoT labeled dataset",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.062697",
+    "stage": "Training Data",
+    "message": "Loaded 211043 labeled samples from TON-IoT",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.079363",
+    "stage": "Phase 1",
+    "message": "Starting Isolation Forest anomaly detection",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.081822",
+    "stage": "Phase 1",
+    "message": "Loaded 12 network flows",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.292398",
+    "stage": "Phase 1",
+    "message": "Isolation Forest complete",
+    "data": {
+      "normal": 10,
+      "anomalies": 2
+    }
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.318108",
+    "stage": "Hybrid Dataset",
+    "message": "Dataset preparation complete",
+    "data": {
+      "ton_iot": 211043,
+      "phase1": 12,
+      "total": 211055
+    }
+  },
+  {
+    "timestamp": "2026-02-06T08:10:35.324609",
+    "stage": "Model Training",
+    "message": "Training Hybrid Random Forest classifier",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:46.284277",
+    "stage": "Model Training",
+    "message": "Training complete",
+    "data": {
+      "accuracy": "100.00%",
+      "training_time": "10.61s",
+      "model_path": "ai_engine/models/hybrid_rf.pkl"
+    }
+  },
+  {
+    "timestamp": "2026-02-06T08:10:46.527455",
+    "stage": "Model Training",
+    "message": "Model saved to ai_engine/models/hybrid_rf.pkl",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:46.528182",
+    "stage": "Classification",
+    "message": "Classifying Phase-1 Traffic",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T08:10:46.708388",
+    "stage": "Classification",
+    "message": "Traffic classification complete",
+    "data": {
+      "flows_analyzed": 12,
+      "normal": 10,
+      "suspicious": 2,
+      "output": "logs/traffic_labeled.csv"
+    }
+  },
+  {
+    "timestamp": "2026-02-06T08:10:46.708907",
+    "stage": "System",
+    "message": "Analysis pipeline completed successfully",
+    "data": null
+  },
+  {
+    "timestamp": "2026-02-06T20:09:14.539361",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:17.323703",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:20.131289",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:22.802614",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:25.387023",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:27.978479",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:30.573466",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:33.154803",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:35.703342",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:38.395715",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:40.975018",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:43.569283",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:46.119263",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:48.740718",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:51.334814",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:53.902241",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:56.498117",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:09:59.116490",
+    "packets_processed": 60,
+    "suspicious": 60,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:16:54.491808",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:16:57.609746",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:00.635895",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:03.681292",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:06.820821",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:09.894906",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:12.922018",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:15.957516",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:18.954169",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:21.979400",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:25.107432",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:28.483643",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:31.504533",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:34.539140",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:37.538949",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:40.508642",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:43.500176",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:46.459991",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:49.500918",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:52.557869",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:55.806551",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:17:58.701690",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:01.586189",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:04.480222",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:07.393475",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:10.576047",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:13.571400",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:16.606734",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:19.626538",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:22.638575",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:25.613493",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:28.697785",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:31.753592",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:34.780365",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:37.773988",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:40.738723",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:43.744061",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:46.753716",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:49.761856",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:52.774372",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:55.728319",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:18:58.685258",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:01.704504",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:04.792985",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:07.840547",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:10.897109",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:13.869232",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:16.869290",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:19.833516",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:23.019051",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:25.894995",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:28.848938",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:31.751743",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:34.713178",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:37.758721",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:40.839355",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:44.043949",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:46.959915",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:49.874199",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:19:52.787775",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:08.347753",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:10.692092",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:13.152047",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:15.487006",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:17.881420",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:20.308349",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:22.655549",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:24.976598",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:27.402317",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:45:29.783114",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:47:23.371741",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:50:13.999706",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:51:04.049730",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  },
+  {
+    "timestamp": "2026-02-06T20:52:43.746559",
+    "packets_processed": 6,
+    "suspicious": 6,
+    "benign": 0
+  }
+]
