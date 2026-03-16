@@ -1,0 +1,10 @@
+core:
+  logging:
+    level: info
+
+servicesDir: ./services
+
+protocols:
+  http:
+    enabled: true
+    port: 80

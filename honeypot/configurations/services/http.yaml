@@ -1,0 +1,12 @@
+name: http
+protocol: http
+port: 80
+enabled: true
+
+routes:
+  - path: /
+    method: GET
+    response:
+      status: 200
+      body: "OK"
+
