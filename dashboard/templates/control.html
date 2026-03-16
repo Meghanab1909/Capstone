@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Traffic Control</title>
+</head>
+<body>
+    <h1>Traffic Injection & Inspection</h1>
+
+    <button onclick="inject()">Inject Traffic</button>
+
+    <pre id="output"></pre>
+
+    <br>
+    <a href="/">← Back to Dashboard</a>
+
+    <script>
+        function inject() {
+            fetch("/control/inject", { method: "POST" })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("output").textContent =
+                        "Requests sent: " + data.requests_sent + "\n" +
+                        "Device response: " + data.device_response + "\n" +
+                        "Timestamp: " + new Date(data.timestamp * 1000);
+                });
+        }
+    </script>
+</body>
+</html>
+

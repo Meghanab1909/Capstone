@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IoT Honeynet Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        .card { padding: 20px; margin: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+<h1>IoT Honeynet Dashboard (Phase 0)</h1>
+
+<div class="card">
+    <h3>Traffic Summary</h3>
+    <p>Total Packets: {{ total_packets }}</p>
+    <p>Normal: {{ normal }}</p>
+    <p>Attacks: {{ attacks }}</p>
+</div>
+
+<div class="card">
+    <h3>Device Hit Count</h3>
+    <canvas id="deviceChart"></canvas>
+</div>
+
+<div class="card">
+    <h3>Traffic Timeline</h3>
+    <canvas id="timelineChart"></canvas>
+</div>
+
+<script>
+const deviceData = {
+    labels: {{ device_hits.keys() | list }},
+    datasets: [{
+        label: "Hits",
+        data: {{ device_hits.values() | list }}
+    }]
+};
+
+new Chart(document.getElementById("deviceChart"), {
+    type: "bar",
+    data: deviceData
+});
+
+const timelineData = {
+    labels: {{ timeline.keys() | list }},
+    datasets: [{
+        label: "Packets over time",
+        data: {{ timeline.values() | list }}
+    }]
+};
+
+new Chart(document.getElementById("timelineChart"), {
+    type: "line",
+    data: timelineData
+});
+</script>
+
+</body>
+</html>
