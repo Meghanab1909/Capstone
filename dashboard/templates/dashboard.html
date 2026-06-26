@@ -4,584 +4,783 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT Honeynet Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:         #141920;
+            --surface:    #1a2230;
+            --surface2:   #1e2840;
+            --surface3:   #243050;
+            --border:     rgba(100, 140, 200, 0.12);
+            --border-hi:  rgba(100, 160, 255, 0.25);
+
+            --blue:       #6aacff;
+            --blue-soft:  rgba(106, 172, 255, 0.12);
+            --green:      #4dd9a0;
+            --green-soft: rgba(77, 217, 160, 0.1);
+            --amber:      #fbbf6a;
+            --amber-soft: rgba(251, 191, 106, 0.1);
+            --red:        #ff7b8a;
+            --red-soft:   rgba(255, 123, 138, 0.1);
+            --purple:     #c4a4ff;
+            --purple-soft:rgba(196, 164, 255, 0.1);
+            --cyan:       #67d8f0;
+
+            --text-dim:   #5a7090;
+            --text:       #8eacc4;
+            --text-hi:    #ccddf0;
+
+            --mono: 'IBM Plex Mono', 'Courier New', monospace;
+            --sans: 'IBM Plex Sans', system-ui, sans-serif;
+
+            --radius: 8px;
+            --radius-sm: 5px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #0f1419;
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            color: #e5e5e5;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
+        /* ── TOPBAR ─────────────────────────────────── */
         .topbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: var(--surface);
+            padding: 14px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #1e293b;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
         }
 
-        .topbar-left {
+        .tl { display: flex; align-items: center; gap: 14px; }
+
+        .lmark {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--blue-soft), var(--purple-soft));
+            border: 1px solid var(--border-hi);
+            border-radius: var(--radius-sm);
+            display: grid;
+            place-items: center;
+        }
+        .lmark svg { width: 16px; height: 16px; fill: var(--blue); }
+
+        .ltxt { font-size: .95rem; font-weight: 600; color: var(--text-hi); letter-spacing: .02em; }
+        .lsub { font-size: .62rem; color: var(--text-dim); letter-spacing: .08em; text-transform: uppercase; margin-top: 1px; }
+
+        .live-pill {
+            display: flex; align-items: center; gap: 7px;
+            font-size: .62rem; letter-spacing: .08em; text-transform: uppercase;
+            padding: .3rem .8rem;
+            background: var(--green-soft);
+            border: 1px solid rgba(77,217,160,.2);
+            border-radius: 99px;
+            color: var(--green);
+        }
+        .pulse {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: blink 2s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1;box-shadow:0 0 6px var(--green)} 50%{opacity:.3;box-shadow:none} }
+
+        /* ── TABS ────────────────────────────────────── */
+        .tabbar {
+            background: var(--surface);
+            padding: 0 28px;
             display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #9ca3af;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: pulse 2s infinite;
-            box-shadow: 0 0 10px #10b981;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 8px;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 20px 30px;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
             overflow-x: auto;
-            border-bottom: 1px solid #1e293b;
         }
-
-        .tab-buttons button {
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            background: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 10px;
-            transition: all 0.3s ease;
+        .tb {
+            padding: 13px 18px;
+            font-size: .7rem; font-weight: 500; letter-spacing: .07em; text-transform: uppercase;
+            cursor: pointer; background: transparent; border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-dim);
             white-space: nowrap;
-            color: #94a3b8;
+            transition: color .15s, border-color .15s;
+            font-family: var(--sans);
         }
+        .tb:hover { color: var(--text); border-bottom-color: var(--border-hi); }
+        .tb.active { color: var(--blue); border-bottom-color: var(--blue); }
 
-        .tab-buttons button:hover {
-            border-color: #3b82f6;
-            color: #3b82f6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        /* ── LAYOUT ──────────────────────────────────── */
+        .container { padding: 24px 28px; max-width: 1440px; margin: 0 auto; }
+        .tc { display: none; } .tc.active { display: block; }
+
+        /* ── STAT ROW ────────────────────────────────── */
+        .srow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
-
-        .tab-buttons button.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        .sc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            display: flex; flex-direction: column; gap: 5px;
+            transition: border-color .15s;
         }
+        .sc:hover { border-color: var(--border-hi); }
+        .sl { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); }
+        .sv { font-size: 2rem; font-family: var(--mono); line-height: 1.1; font-weight: 300; }
+        .ss { font-size: .6rem; color: var(--text-dim); }
+        .cb { color: var(--blue); } .cg { color: var(--green); }
+        .ca { color: var(--amber); } .cr { color: var(--red); } .cp { color: var(--purple); }
 
-        .container {
-            padding: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
+        /* ── CARD ────────────────────────────────────── */
         .card {
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #334155;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            overflow: hidden;
         }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 48px rgba(59, 130, 246, 0.2);
-            border-color: #475569;
+        .ch {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,.15);
         }
+        .ct { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-hi); font-weight: 500; }
+        .cb-pad { padding: 18px; }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        /* ── BADGE ───────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .58rem; letter-spacing: .07em; text-transform: uppercase;
+            padding: .22rem .6rem;
+            border-radius: 4px;
+            font-family: var(--sans); font-weight: 500;
         }
+        .bg  { background: var(--green-soft);  color: var(--green);  border: 1px solid rgba(77,217,160,.2); }
+        .ba  { background: var(--amber-soft);  color: var(--amber);  border: 1px solid rgba(251,191,106,.2); }
+        .bb  { background: var(--blue-soft);   color: var(--blue);   border: 1px solid rgba(106,172,255,.2); }
+        .br  { background: var(--red-soft);    color: var(--red);    border: 1px solid rgba(255,123,138,.2); }
+        .bp  { background: var(--purple-soft); color: var(--purple); border: 1px solid rgba(196,164,255,.2); }
 
-        .card-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #e5e5e5;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* ── DEVICE GRID ─────────────────────────────── */
+        .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .dc {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: border-color .15s, background .15s;
         }
+        .dc:hover { border-color: var(--border-hi); background: var(--surface3); }
+        .di { font-size: 24px; margin-bottom: 10px; }
+        .dn { font-size: .88rem; font-weight: 600; color: var(--text-hi); margin-bottom: 3px; }
+        .dt { font-size: .6rem; color: var(--text-dim); margin-bottom: 12px; letter-spacing: .04em; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        /* ── FLOW DIAGRAM ────────────────────────────── */
+        .flow-diag {
+            display: flex; align-items: center;
+            gap: 0; padding: 18px 20px;
+            overflow-x: auto; font-size: .65rem;
         }
-
-        .stat-box {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-            border: 1px solid #475569;
+        .fnode {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            text-align: center; min-width: 110px; flex-shrink: 0;
         }
+        .fnode .fn { font-weight: 600; color: var(--text-hi); margin-bottom: 3px; font-size: .72rem; }
+        .fnode .fd { color: var(--text-dim); font-size: .58rem; font-family: var(--mono); }
+        .farrow { color: var(--text-dim); padding: 0 10px; font-size: 1.1rem; flex-shrink: 0; }
+        .farrow.red { color: var(--red); opacity: .7; }
+        .farrow.green { color: var(--green); opacity: .7; }
 
-        .stat-box:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-            border-color: #3b82f6;
+        /* ── CLUSTER GRID ────────────────────────────── */
+        .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .cbox { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .cboxh {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 9px 13px; border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,.15);
         }
+        .cid { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); font-weight: 600; }
+        .cboxb { padding: 13px; display: flex; flex-direction: column; gap: 7px; }
+        .crow { display: flex; justify-content: space-between; font-size: .63rem; }
+        .ckey { color: var(--text-dim); } .cval { color: var(--text-hi); font-family: var(--mono); }
+        .pbar { height: 3px; background: var(--border); margin-top: 8px; border-radius: 99px; }
+        .pfill { height: 100%; border-radius: 99px; transition: width .5s ease; }
 
-        .stat-label {
-            font-size: 14px;
-            color: #9ca3af;
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        /* ── TABLE ───────────────────────────────────── */
+        .twrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: .68rem; }
+        thead th {
+            background: rgba(0,0,0,.25);
+            color: var(--text-dim); padding: 10px 14px; text-align: left;
+            font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+            font-weight: 500;
         }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); font-size: .68rem; vertical-align: middle; }
+        tbody tr:hover td { background: rgba(106, 172, 255, 0.03); }
+        tbody tr:last-child td { border-bottom: none; }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        /* ── AI CARDS ────────────────────────────────── */
+        .agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+        .acard {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            border-left: 3px solid var(--text-dim);
+            overflow: hidden;
+            transition: border-color .15s;
         }
-
-        .device-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        .acard.critical { border-left-color: var(--red); }
+        .acard.high     { border-left-color: var(--amber); }
+        .acard.medium   { border-left-color: var(--blue); }
+        .acard.low      { border-left-color: var(--green); }
+        .acard:hover    { border-color: var(--border-hi); border-left-width: 3px; }
+        .ahead {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,.15);
         }
+        .atime { font-size: .58rem; color: var(--text-dim); font-family: var(--mono); }
+        .abody { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .arow { display: flex; gap: 10px; align-items: flex-start; }
+        .akey { font-size: .58rem; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); min-width: 110px; padding-top: 2px; flex-shrink: 0; }
+        .aval { font-size: .68rem; color: var(--text-hi); flex: 1; line-height: 1.6; }
+        .itags { display: flex; flex-wrap: wrap; gap: 5px; }
+        .itag { font-size: .58rem; letter-spacing: .04em; padding: .18rem .5rem; border: 1px solid var(--border-hi); color: var(--text); border-radius: 3px; }
+        .cbar  { height: 3px; background: var(--border); margin-top: 5px; border-radius: 99px; }
+        .cfill { height: 100%; border-radius: 99px; }
 
-        .device-card {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #475569;
-            transition: all 0.3s ease;
-        }
-
-        .device-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-            border-color: #3b82f6;
-        }
-
-        .device-icon {
-            font-size: 36px;
-            margin-bottom: 12px;
-        }
-
-        .device-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #e5e5e5;
-            margin-bottom: 8px;
-        }
-
-        .device-type {
-            font-size: 14px;
-            color: #9ca3af;
-            margin-bottom: 12px;
-        }
-
-        .device-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-online {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid #10b981;
-        }
-
-        .status-malicious {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid #ef4444;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-top: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 15px;
-        }
-
-        table th {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: #60a5fa;
-            padding: 14px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 1px solid #475569;
-        }
-
-        table th:first-child {
-            border-radius: 8px 0 0 0;
-        }
-
-        table th:last-child {
-            border-radius: 0 8px 0 0;
-        }
-
-        table td {
-            padding: 14px;
-            border-bottom: 1px solid #334155;
-            color: #cbd5e1;
-            font-size: 14px;
-        }
-
-        table tr:last-child td {
-            border-bottom: none;
-        }
-
-        table tr:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .no-data {
-            color: #6b7280;
-            font-size: 15px;
-            padding: 40px;
-            text-align: center;
-            font-style: italic;
-        }
-
+        /* ── BUTTONS ─────────────────────────────────── */
         .btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            color: white;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            font-size: .62rem; letter-spacing: .07em; text-transform: uppercase;
+            padding: .4rem .9rem;
+            border: 1px solid var(--border-hi); color: var(--text);
+            background: transparent; cursor: pointer; border-radius: var(--radius-sm);
+            transition: border-color .15s, color .15s, background .15s;
+            font-family: var(--sans);
+        }
+        .btn:hover { border-color: var(--blue); color: var(--blue); }
+        .btnb { border-color: rgba(106,172,255,.25); color: var(--blue); }
+        .btnb:hover { background: var(--blue-soft); }
+
+        /* ── FILTER BUTTONS ──────────────────────────── */
+        .frow { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .flbl { font-size: .6rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
+        .fbtn {
+            font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+            padding: .22rem .65rem;
+            border: 1px solid var(--border); color: var(--text-dim);
+            background: transparent; cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all .12s;
+            font-family: var(--sans);
+        }
+        .fbtn:hover, .fbtn.active { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+
+        /* ── INFO BOX ────────────────────────────────── */
+        .infobox { font-size: .72rem; line-height: 1.9; color: var(--text); }
+        .infobox p { margin-bottom: 12px; }
+        .infobox code { color: var(--cyan); font-family: var(--mono); font-size: .7rem; }
+        .infobox strong { color: var(--text-hi); font-weight: 600; }
+        .code-block {
+            font-family: var(--mono); font-size: .66rem; color: var(--cyan);
+            background: rgba(0,0,0,.3); padding: 12px 16px;
+            border-left: 2px solid rgba(106,172,255,.25);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            line-height: 1.8;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-        }
+        /* ── EMPTY ───────────────────────────────────── */
+        .empty { padding: 44px 20px; text-align: center; color: var(--text-dim); font-size: .68rem; letter-spacing: .06em; }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .control-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .output-box {
-            background: #0f172a;
-            color: #10b981;
-            padding: 20px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 15px;
-            border: 1px solid #1e293b;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .metric-highlight {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            font-weight: 700;
+        /* ── DIVIDER LABEL ───────────────────────────── */
+        .section-label {
+            font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 12px; margin-top: 4px;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            .stats-grid, .device-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            .chart-container {
-                height: 250px;
-            }
+            .container { padding: 14px 16px; }
+            .agrid { grid-template-columns: 1fr; }
+            table { font-size: .6rem; }
+            .topbar { padding: 12px 16px; }
+            .tabbar { padding: 0 16px; }
         }
     </style>
 </head>
-
 <body>
 
-    <div class="topbar">
-        <div class="topbar-left">
-            <div class="logo">🛡️ IoT Honeynet</div>
-            <div class="status-indicator">
-                <span class="status-dot"></span>
-                <span>System Active • Live Updates</span>
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="tl">
+        <div class="lmark">
+            <svg viewBox="0 0 16 16"><polygon points="8,1 15,14 1,14"/></svg>
+        </div>
+        <div>
+            <div class="ltxt">IoT Honeynet</div>
+            <div class="lsub">Threat Detection &amp; Analysis</div>
+        </div>
+    </div>
+    <div class="live-pill"><div class="pulse"></div>System Active</div>
+</div>
+
+<!-- TABS -->
+<div class="tabbar">
+    <button class="tb active" onclick="showTab('devices',this)">⬡&nbsp; Devices</button>
+    <button class="tb"        onclick="showTab('loadbalancer',this)">⇄&nbsp; Load Balancer</button>
+    <button class="tb"        onclick="showTab('gateway',this)">⇢&nbsp; Gateway Decisions</button>
+    <button class="tb"        onclick="showTab('aianalysis',this)">✦&nbsp; AI Analysis</button>
+    <button class="tb"        onclick="showTab('attacksim',this)">⚡&nbsp; Attack Sim</button>
+</div>
+
+<div class="container">
+
+<!-- ══════════ TAB: DEVICES ══════════ -->
+<div id="devices" class="tc active">
+
+    <div class="srow">
+        <div class="sc"><div class="sl">Real IoT</div><div class="sv cg">4</div><div class="ss">nodes · 4 clusters</div></div>
+        <div class="sc"><div class="sl">Honeypot</div><div class="sv ca">2</div><div class="ss">beelzebub · Llama3 LLM</div></div>
+        <div class="sc"><div class="sl">Dummy IoT</div><div class="sv cb">1</div><div class="ss">simulated node</div></div>
+        <div class="sc"><div class="sl">LLM Engine</div><div class="sv cp" style="font-size:1rem;padding-top:8px">Llama 3</div><div class="ss">Llama3</div></div>
+        <div class="sc"><div class="sl">Gateway Port</div><div class="sv cb">8080</div><div class="ss">round-robin LB</div></div>
+    </div>
+
+    <!-- Traffic Flow -->
+    <div class="card">
+        <div class="ch"><div class="ct">Traffic Flow</div></div>
+        <div>
+            <div class="flow-diag">
+                <div class="fnode"><div class="fn">Attacker</div><div class="fd">any IP</div></div>
+                <div class="farrow">→</div>
+                <div class="fnode"><div class="fn">Gateway</div><div class="fd">:8080 · hybrid_ai.py</div></div>
+                <div class="farrow green">→</div>
+                <div class="fnode" style="border-color:rgba(77,217,160,.2);background:var(--green-soft)"><div class="fn" style="color:var(--green)">Label 0</div><div class="fd">benign</div></div>
+                <div class="farrow green">→</div>
+                <div class="fnode"><div class="fn">Real IoT</div><div class="fd">4 nodes · RR</div></div>
+            </div>
+            <div style="border-top:1px solid var(--border);margin:0 20px"></div>
+            <div class="flow-diag">
+                <div class="fnode" style="visibility:hidden;min-width:110px"></div>
+                <div class="farrow" style="visibility:hidden">→</div>
+                <div class="fnode" style="border-color:transparent;background:transparent;min-width:195px"></div>
+                <div class="farrow red">→</div>
+                <div class="fnode" style="border-color:rgba(251,191,106,.2);background:var(--amber-soft)"><div class="fn" style="color:var(--amber)">Label 1</div><div class="fd">suspicious</div></div>
+                <div class="farrow red">→</div>
+                <div class="fnode"><div class="fn">Honeypot</div><div class="fd">2 nodes · RR</div></div>
+                <div class="farrow red">→</div>
+                <div class="fnode" style="border-color:rgba(196,164,255,.2);background:var(--purple-soft)"><div class="fn" style="color:var(--purple)">Llama3 LLM</div><div class="fd">analysis + deception</div></div>
             </div>
         </div>
     </div>
 
-    <div class="tab-buttons">
-        <button class="active" onclick="showTab('devices')">🔌 Devices</button>
-        <button onclick="showTab('gateway')">🚪 Gateway Decisions</button>
+    <!-- Real IoT -->
+    <div class="section-label">Real IoT Devices</div>
+    <div class="card">
+        <div class="ch"><div class="ct">📱 Real IoT Devices</div><span class="badge bg">4 nodes online</span></div>
+        <div class="cb-pad">
+            <div class="dgrid">
+                <div class="dc"><div class="di">📱</div><div class="dn">real_iot_c1</div><div class="dt">IoT Device · Cluster 1 · :5000</div><span class="badge bg">● Online</span></div>
+                <div class="dc"><div class="di">📱</div><div class="dn">real_iot_c2</div><div class="dt">IoT Device · Cluster 2 · :5003</div><span class="badge bg">● Online</span></div>
+                <div class="dc"><div class="di">📱</div><div class="dn">real_iot_c3</div><div class="dt">IoT Device · Cluster 3 · :5006</div><span class="badge bg">● Online</span></div>
+                <div class="dc"><div class="di">📱</div><div class="dn">real_iot_c4</div><div class="dt">IoT Device · Cluster 4 · :5009</div><span class="badge bg">● Online</span></div>
+            </div>
+        </div>
     </div>
 
-    <div class="container">
-
-
-        <!-- DEVICES TAB -->
-        <div id="devices" class="tab-content" style="display:block;">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">🔌 Real Devices</div>
-                </div>
-                <div class="device-grid">
-                    <div class="device-card">
-                        <div class="device-icon">📱</div>
-                        <div class="device-name">Real Device</div>
-                        <div class="device-type">IoT Device</div>
-                        <span class="device-status status-online">● ONLINE</span>
-                    </div>
-                </div>
+    <!-- Honeypot -->
+    <div class="section-label">Honeypot Devices</div>
+    <div class="card">
+        <div class="ch"><div class="ct">🍯 Honeypot Devices</div><span class="badge ba">beelzebub · Llama3 LLM</span></div>
+        <div class="cb-pad">
+            <div class="dgrid">
+                <div class="dc"><div class="di">🍯</div><div class="dn">honeypot_c1</div><div class="dt">Decoy · Cluster 1 · :5002</div><span class="badge ba">● Active</span></div>
+                <div class="dc"><div class="di">🍯</div><div class="dn">honeypot_c2</div><div class="dt">Decoy · Cluster 2 · :5004</div><span class="badge ba">● Active</span></div>
             </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">🍯 Honeypot Devices</div>
-                </div>
-                <div class="device-grid">
-                    <div class="device-card">
-                        <div class="device-icon">🍯</div>
-                        <div class="device-name">Honeynet Device</div>
-                        <div class="device-type">Decoy Device</div>
-                        <span class="device-status status-online">● ACTIVE</span>
-                    </div>
-                </div>
+            <div style="margin-top:14px">
+                <button class="btn btnb" onclick="window.open('/ssh-terminal','_blank')">🖥&nbsp; Open SSH Terminal</button>
+                <span style="font-size:.6rem;color:var(--text-dim);margin-left:8px">connects to honeypot_c1 · :2222</span>
             </div>
+        </div>
+    </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">🔌 Dummy Devices</div>
-                </div>
-                <div class="device-grid">
-                    <div class="device-card">
-                        <div class="device-icon">🔌</div>
-                        <div class="device-name">Dummy Device</div>
-                        <div class="device-type">Simulated Device</div>
-                        <span class="device-status status-online">● SIMULATED</span>
-                    </div>
+    <!-- Dummy -->
+    <div class="section-label">Dummy Devices</div>
+    <div class="card">
+        <div class="ch"><div class="ct">🔌 Dummy Devices</div><span class="badge bb">Simulated</span></div>
+        <div class="cb-pad">
+            <div class="dgrid">
+                <div class="dc"><div class="di">🔌</div><div class="dn">dummy_iot_c1</div><div class="dt">Simulated · Cluster 1 · :5001</div><span class="badge bb">● Simulated</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ TAB: LOAD BALANCER ══════════ -->
+<div id="loadbalancer" class="tc">
+
+    <div class="srow">
+        <div class="sc"><div class="sl">Strategy</div><div class="sv cb" style="font-size:.95rem;padding-top:9px">Round-Robin</div><div class="ss">per pool</div></div>
+        <div class="sc"><div class="sl">Real Pool</div><div class="sv cg">4</div><div class="ss">nodes</div></div>
+        <div class="sc"><div class="sl">Honeypot Pool</div><div class="sv ca">2</div><div class="ss">nodes</div></div>
+        <div class="sc"><div class="sl">Benign Routed</div><div class="sv cg" id="lb-benign">—</div><div class="ss">→ real pool</div></div>
+        <div class="sc"><div class="sl">Redirected</div><div class="sv cr" id="lb-suspect">—</div><div class="ss">→ honeypot pool</div></div>
+    </div>
+
+    <div class="card">
+        <div class="ch"><div class="ct">⇄ Real IoT Pool</div><button class="btn btnb" onclick="refreshLB()">↺ Refresh</button></div>
+        <div class="cb-pad"><div class="cgrid" id="real-clusters"></div></div>
+    </div>
+
+    <div class="card">
+        <div class="ch"><div class="ct">⇄ Honeypot Pool</div></div>
+        <div class="cb-pad"><div class="cgrid" id="hp-clusters"></div></div>
+    </div>
+
+    <div class="card">
+        <div class="ch"><div class="ct">⇄ Dummy Pool</div></div>
+        <div class="cb-pad"><div class="cgrid" id="dummy-clusters"></div></div>
+    </div>
+</div>
+
+<!-- ══════════ TAB: GATEWAY DECISIONS ══════════ -->
+<div id="gateway" class="tc">
+    <div class="card">
+        <div class="ch"><div class="ct">⇢ Gateway Decision Log</div><button class="btn btnb" onclick="refreshGW()">↺ Refresh</button></div>
+        <div class="twrap">
+            <table>
+                <thead><tr>
+                    <th>Timestamp</th><th>Req ID</th><th>Source IP</th>
+                    <th>AI Label</th><th>Decision</th><th>Pool</th>
+                    <th>Cluster</th><th>Forwarded To</th>
+                </tr></thead>
+                <tbody id="gw-tbody"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ TAB: AI ANALYSIS ══════════ -->
+<div id="aianalysis" class="tc">
+
+    <div class="srow">
+        <div class="sc"><div class="sl">Analysis Source</div><div class="sv cp" style="font-size:.88rem;padding-top:9px">Honeypot LLM</div><div class="ss">llama3</div></div>
+        <div class="sc"><div class="sl">Critical</div><div class="sv cr" id="ai-crit">0</div><div class="ss">threat level</div></div>
+        <div class="sc"><div class="sl">High</div><div class="sv ca" id="ai-high">0</div><div class="ss">threat level</div></div>
+        <div class="sc"><div class="sl">Medium / Low</div><div class="sv cb" id="ai-ml">0</div><div class="ss">threat level</div></div>
+        <div class="sc"><div class="sl">Total Analysed</div><div class="sv cg" id="ai-total">0</div><div class="ss">honeypot events</div></div>
+    </div>
+    
+
+    <div class="card">
+        <div class="ch"><div class="ct">✦ Honeypot LLM Analysis Records</div><button class="btn btnb" onclick="refreshAI()">↺ Refresh</button></div>
+        <div class="cb-pad">
+            <div class="frow">
+                <span class="flbl">Filter:</span>
+                <button class="fbtn active" onclick="filterAI('all',this)">All</button>
+                <button class="fbtn" onclick="filterAI('critical',this)">Critical</button>
+                <button class="fbtn" onclick="filterAI('high',this)">High</button>
+                <button class="fbtn" onclick="filterAI('medium',this)">Medium</button>
+                <button class="fbtn" onclick="filterAI('low',this)">Low</button>
+            </div>
+            <div class="agrid" id="agrid">
+                <div class="empty" style="grid-column:1/-1">
+                    No analysis records yet. Suspicious traffic arriving at the honeypot will appear here.
                 </div>
             </div>
         </div>
-        <!-- GATEWAY DECISIONS TAB -->
-        <div id="gateway" class="tab-content" style="display:none;">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">🚪 Gateway Decision Log</div>
-                    <button class="btn" onclick="refreshGatewayLogs()">🔄 Refresh</button>
-                </div>
-                <div id="gateway-table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>Source IP</th>
-                                <th>AI Label</th>
-                                <th>Decision</th>
-                                <th>Forwarded To</th>
-                            </tr>
-                        </thead>
-                        <tbody id="log-table">
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
-                                    Loading gateway logs...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    </div>
+</div>
+
+<!-- ══════════ TAB: ATTACK SIM ══════════ -->
+<div id="attacksim" class="tc">
+
+    <div class="srow">
+        <div class="sc"><div class="sl">Total Fired</div><div class="sv cb" id="as-total">0</div><div class="ss">this session</div></div>
+        <div class="sc"><div class="sl">Last Type</div><div class="sv ca" id="as-type" style="font-size:.95rem;padding-top:9px">—</div><div class="ss">attack pattern</div></div>
+        <div class="sc"><div class="sl">Last Status</div><div class="sv cg" id="as-status">—</div><div class="ss">HTTP response</div></div>
+        <div class="sc"><div class="sl">Auto-Fire</div><div class="sv cp" id="as-auto" style="font-size:.95rem;padding-top:9px">Off</div><div class="ss">5× · 3s spacing</div></div>
+    </div>
+
+    <div class="card">
+        <div class="ch"><div class="ct">⚡ Attack Simulator</div></div>
+        <div class="cb-pad">
+            <div class="frow">
+                <button class="btn btnb" onclick="fireAttack(true)">⚡ Fire Single Attack</button>
+                <button class="btn btnb" id="as-autobtn" onclick="toggleAutoFire()">▶ Auto-Fire (5×, 3s)</button>
+            </div>
+            <div id="as-log" style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+                <div class="empty">No attacks fired yet this session.</div>
             </div>
         </div>
-
     </div>
+</div>
+
+</div><!-- /container -->
 
 <script>
-
-/* TAB SWITCHING */
-function showTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = "none");
-    document.querySelectorAll('.tab-buttons button').forEach(b => b.classList.remove("active"));
-
-    document.getElementById(tabId).style.display = "block";
-    event.target.classList.add("active");
-
-    // Load data for specific tabs when opened
-    if (tabId === 'gateway') refreshGatewayLogs();
+// ── TAB SWITCHING ──────────────────────────────────────────
+function showTab(id, btn) {
+    document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tb').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (id === 'gateway')      refreshGW();
+    if (id === 'aianalysis')   refreshAI();
+    if (id === 'loadbalancer') refreshLB();
 }
 
-
-/* CONTROL ACTIONS */
-async function injectTraffic() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading"></span> Injecting...';
-    
+// ── GATEWAY LOG ────────────────────────────────────────────
+async function refreshGW() {
+    const tbody = document.getElementById('gw-tbody');
     try {
-        const res = await fetch("/control/inject", { method: "POST" });
-        const data = await res.json();
-        document.getElementById("control-output").innerHTML = 
-            `<div class="output-box">${JSON.stringify(data, null, 2)}</div>`;
-    } catch (error) {
-        document.getElementById("control-output").innerHTML = 
-            `<div class="output-box">Error: ${error.message}</div>`;
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '💉 Inject Traffic';
-    }
-}
-
-/* GATEWAY DECISION LOGS */
-async function refreshGatewayLogs() {
-    try {
-        const res = await fetch("/gateway_logs");
-        const data = await res.json();
-        const tbody = document.getElementById("log-table");
-        
-        if (!data.logs || data.logs.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
-                        No gateway logs available yet.
-                    </td>
-                </tr>
-            `;
+        const d    = await fetch('/gateway_logs').then(r => r.json());
+        const logs = d.logs || [];
+        if (!logs.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="empty">No gateway logs yet.</td></tr>`;
             return;
         }
-        
-        tbody.innerHTML = "";
-        data.logs.forEach(log => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${log.timestamp || 'N/A'}</td>
-                <td>${log.src_ip || 'N/A'}</td>
-                <td><span class="status-badge ${log.ai_label === 'benign' ? 'status-online' : 'status-malicious'}">${log.ai_label || 'N/A'}</span></td>
-                <td>${log.decision || 'N/A'}</td>
-                <td>${log.forward_to || 'N/A'}</td>
-            `;
-            tbody.appendChild(row);
-        });
-    } catch (error) {
-        console.error('Error loading gateway logs:', error);
-        const tbody = document.getElementById("log-table");
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 30px; color: #ef4444;">
-                    Error loading gateway logs: ${error.message}
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = [...logs].reverse().map(l => {
+            const isSusp = l.ai_label !== 'benign';
+            return `<tr>
+                <td style="font-family:var(--mono);font-size:.6rem;color:var(--text-dim)">${l.timestamp||'—'}</td>
+                <td style="font-family:var(--mono);font-size:.61rem">${l.req_id||'—'}</td>
+                <td style="font-family:var(--mono)">${l.src_ip||'—'}</td>
+                <td><span class="badge ${isSusp?'br':'bg'}">${l.ai_label||'—'}</span></td>
+                <td><span class="badge ${isSusp?'ba':'bb'}">${l.decision||'—'}</span></td>
+                <td style="color:var(--text-dim);font-size:.63rem">${l.pool||'—'}</td>
+                <td style="text-align:center;color:var(--blue);font-family:var(--mono)">${l.cluster||'—'}</td>
+                <td style="font-family:var(--mono);font-size:.61rem;color:var(--text-dim)">${l.forward_to||'—'}</td>
+            </tr>`;
+        }).join('');
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty" style="color:var(--red)">Error: ${e.message}</td></tr>`;
     }
 }
 
-// Auto-refresh gateway logs every 2 seconds if on gateway tab
-setInterval(() => {
-    const gatewayTab = document.getElementById('gateway');
-    if (gatewayTab.style.display === 'block') {
-        refreshGatewayLogs();
-    }
-}, 2000);
-</script>
+// ── LOAD BALANCER STATS ────────────────────────────────────
+const REAL_NODES  = [{port:5000,label:'real_iot_c1',cluster:1},{port:5003,label:'real_iot_c2',cluster:2},{port:5006,label:'real_iot_c3',cluster:3},{port:5009,label:'real_iot_c4',cluster:4}];
+const HP_NODES    = [{port:5002,label:'honeypot_c1',cluster:1},{port:5004,label:'honeypot_c2',cluster:2}];
+const DUMMY_NODES = [{port:5001,label:'dummy_iot_c1',cluster:1}];
 
+function renderClusters(containerId, nodes, logs, colorVar, badgeCls) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = nodes.map(n => {
+        const count = logs.filter(l => l.forward_to && l.forward_to.includes(':' + n.port)).length;
+        const pct   = logs.length ? Math.round(count / logs.length * 100) : 0;
+        return `
+        <div class="cbox">
+            <div class="cboxh">
+                <div class="cid">Cluster ${n.cluster}</div>
+                <span class="badge ${badgeCls}" style="font-size:.54rem">C${n.cluster}</span>
+            </div>
+            <div class="cboxb">
+                <div class="crow"><span class="ckey">Node</span><span class="cval">${n.label}</span></div>
+                <div class="crow"><span class="ckey">Port</span><span class="cval">:${n.port}</span></div>
+                <div class="crow"><span class="ckey">Requests</span><span class="cval" style="color:var(${colorVar})">${count}</span></div>
+                <div class="crow"><span class="ckey">Share</span><span class="cval">${pct}%</span></div>
+                <div class="pbar"><div class="pfill" style="width:${pct}%;background:var(${colorVar})"></div></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function refreshLB() {
+    try {
+        const d    = await fetch('/gateway_logs').then(r => r.json());
+        const logs = d.logs || [];
+        document.getElementById('lb-benign').textContent  = logs.filter(l => l.ai_label === 'benign').length;
+        document.getElementById('lb-suspect').textContent = logs.filter(l => l.ai_label !== 'benign').length;
+        renderClusters('real-clusters',  REAL_NODES,  logs, '--green', 'bg');
+        renderClusters('hp-clusters',    HP_NODES,    logs, '--amber', 'ba');
+        renderClusters('dummy-clusters', DUMMY_NODES, logs, '--blue',  'bb');
+    } catch(e) { console.error('LB error', e); }
+}
+
+// ── AI ANALYSIS ────────────────────────────────────────────
+let aiRecords = [];
+let aiFilter  = 'all';
+
+const threatColor = lvl => ({critical:'var(--red)',high:'var(--amber)',medium:'var(--blue)',low:'var(--green)'}[lvl]||'var(--text-dim)');
+const confColor   = c   => c>=80?'var(--red)':c>=60?'var(--amber)':c>=40?'var(--blue)':'var(--text-dim)';
+const badgeClass  = lvl => ({critical:'br',high:'ba',medium:'bb',low:'bg'}[lvl]||'');
+
+function renderAI(records) {
+    const grid  = document.getElementById('agrid');
+    const shown = aiFilter === 'all' ? records : records.filter(r => r.analysis?.threat_level === aiFilter);
+    if (!shown.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No records match filter.</div>`;
+        return;
+    }
+    grid.innerHTML = [...shown].reverse().map(rec => {
+        const a    = rec.analysis || {};
+        const lvl  = a.threat_level || 'unknown';
+        const conf = a.confidence || 0;
+        const whys = (a.why_suspicious||[]).map(w=>`<span class="itag">${w}</span>`).join('');
+        return `
+        <div class="acard ${lvl}">
+            <div class="ahead">
+                <span class="badge ${badgeClass(lvl)}">${lvl}</span>
+                <span class="atime">${(rec.timestamp||'').split('.')[0]}</span>
+            </div>
+            <div class="abody">
+                <div class="arow"><span class="akey">Req ID</span><span class="aval" style="font-family:var(--mono)">${rec.req_id||'—'}</span></div>
+                <div class="arow"><span class="akey">Source IP</span><span class="aval" style="font-family:var(--mono)">${rec.src_ip||'—'}</span></div>
+                <div class="arow"><span class="akey">Attack Hypothesis</span><span class="aval" style="color:var(--amber)">${a.attack_hypothesis||'—'}</span></div>
+                <div class="arow"><span class="akey">Why Suspicious</span><div class="itags">${whys||'<span style="color:var(--text-dim);font-size:.6rem">no indicators</span>'}</div></div>
+                <div class="arow"><span class="akey">vs Benign Baseline</span><span class="aval" style="font-size:.65rem">${a.benign_baseline_comparison||'—'}</span></div>
+                <div class="arow"><span class="akey">Recommendation</span><span class="aval">${a.recommended_action||'—'}</span></div>
+                <div class="arow" style="align-items:center">
+                    <span class="akey">Confidence</span>
+                    <div style="flex:1">
+                        <div style="font-family:var(--mono);font-size:.68rem;color:${confColor(conf)};margin-bottom:5px">${conf}%</div>
+                        <div class="cbar"><div class="cfill" style="width:${conf}%;background:${confColor(conf)}"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function filterAI(level, btn) {
+    aiFilter = level;
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderAI(aiRecords);
+}
+
+async function refreshAI() {
+    try {
+        const d = await fetch('/ai_analysis').then(r => r.json());
+        aiRecords = d.records || [];
+        document.getElementById('ai-total').textContent = aiRecords.length;
+        document.getElementById('ai-crit').textContent  = aiRecords.filter(r=>r.analysis?.threat_level==='critical').length;
+        document.getElementById('ai-high').textContent  = aiRecords.filter(r=>r.analysis?.threat_level==='high').length;
+        document.getElementById('ai-ml').textContent    = aiRecords.filter(r=>['medium','low'].includes(r.analysis?.threat_level)).length;
+        renderAI(aiRecords);
+    } catch(e) {
+        document.getElementById('agrid').innerHTML = `
+            <div class="empty" style="grid-column:1/-1;color:var(--red)">
+                Error loading analysis: ${e.message}<br>
+                <span style="font-size:.62rem;color:var(--text-dim)">
+                    Ensure your server exposes <code>/ai_analysis</code>
+                    returning <code>{"records":[...]}</code> from logs/ai_analysis.log
+                </span>
+            </div>`;
+    }
+}
+
+// ── ATTACK SIM ──────────────────────────────────────────────
+let asTotal = 0;
+let asAutoRunning = false;
+ 
+async function fireAttack(openTab) {
+    let newTab = null;
+    if (openTab) {
+        // Must open synchronously, before the await below, or popup blockers kill it.
+        newTab = window.open('about:blank', '_blank');
+        if (newTab) newTab.document.write('<p style="font-family:monospace;padding:20px;color:#888">Loading response…</p>');
+    }
+ 
+    try {
+        const r = await fetch('/control/simulate_attack', { method: 'POST' }).then(res => res.json());
+ 
+        asTotal++;
+        document.getElementById('as-total').textContent  = asTotal;
+        document.getElementById('as-type').textContent   = r.attack_type || '—';
+        document.getElementById('as-status').textContent = r.status === 'ok' ? ('HTTP ' + r.http_status) : 'error';
+ 
+        const log = document.getElementById('as-log');
+        if (asTotal === 1) log.innerHTML = '';
+ 
+        const entry = document.createElement('div');
+        entry.className = 'cbox';
+        entry.innerHTML = `
+            <div class="cboxb">
+                <div class="crow"><span class="ckey">Type</span><span class="cval">${r.attack_type || '—'}</span></div>
+                <div class="crow"><span class="ckey">Path</span><span class="cval" style="font-family:var(--mono);font-size:.6rem">${r.method || ''} ${r.path || '—'}</span></div>
+                <div class="crow"><span class="ckey">Src IP</span><span class="cval" style="font-family:var(--mono)">${r.src_ip || '—'}</span></div>
+                <div class="crow"><span class="ckey">Result</span><span class="cval" style="color:${r.status === 'ok' ? 'var(--green)' : 'var(--red)'}">${r.status === 'ok' ? ('HTTP ' + r.http_status) : (r.error || 'error')}</span></div>
+            </div>`;
+        log.prepend(entry);
+ 
+        if (newTab) {
+            // Real navigation through the gateway, not painted content -
+            // the address bar will genuinely show :8080. Note: this fires
+            // a SECOND request (the logged one above used spoofed headers
+            // server-side; this one is a real request from your own
+            // browser, so src_ip/User-Agent here will be yours, not the
+            // spoofed attacker identity - browsers can't fake those).
+            // Demo override - guarantees this lands on the honeypot so the
+            // popup reliably shows it, regardless of the AI's actual call
+            // (which still gets logged separately, unaffected by this).
+            const sep = r.path.includes('?') ? '&' : '?';
+            const targetUrl = 'http://' + window.location.hostname + ':8080' + r.path + sep + '_force_suspicious=1';
+            if (r.method === 'POST') {
+                const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const params = new URLSearchParams(r.body || '');
+                let inputs = '';
+                for (const [key, value] of params.entries()) {
+                    inputs += `<input type="hidden" name="${esc(key)}" value="${esc(value)}">`;
+                }
+                newTab.document.open();
+                newTab.document.write(`<form id="navform" method="POST" action="${esc(targetUrl)}">${inputs}</form><script>document.getElementById('navform').submit();<\/script>`);
+                newTab.document.close();
+            } else {
+                newTab.location.href = targetUrl;
+            }
+        }
+        return r;
+    } catch (e) {
+        console.error('Attack sim error:', e);
+        document.getElementById('as-status').textContent = 'error';
+        if (newTab) newTab.close();
+    }
+}
+ 
+async function toggleAutoFire() {
+    if (asAutoRunning) return;
+    asAutoRunning = true;
+    document.getElementById('as-auto').textContent = 'Running…';
+    const btn = document.getElementById('as-autobtn');
+    btn.disabled = true;
+ 
+    for (let i = 0; i < 5; i++) {
+        await fireAttack(false);   // never open tabs here — popup blockers would kill calls 2-5 anyway
+        if (i < 4) await new Promise(res => setTimeout(res, 3000));
+    }
+ 
+    asAutoRunning = false;
+    document.getElementById('as-auto').textContent = 'Off';
+    btn.disabled = false;
+}
+ 
+// ── AUTO REFRESH ───────────────────────────────────────────
+setInterval(() => {
+    const active = document.querySelector('.tc.active');
+    if (!active) return;
+    if (active.id === 'gateway')      refreshGW();
+    if (active.id === 'aianalysis')   refreshAI();
+    if (active.id === 'loadbalancer') refreshLB();
+}, 3000);
+</script>
 </body>
 </html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SSH Console — Honeypot</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#0b0e13; height:100%; }
+  #status {
+    font-family: 'Courier New', monospace; font-size: 12px; color: #5a7090;
+    padding: 6px 10px; background:#1a2230; border-bottom:1px solid rgba(100,140,200,.12);
+  }
+  #term { padding: 8px; height: calc(100vh - 30px); box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="status">connecting…</div>
+<div id="term"></div>
+<script>
+  const term = new Terminal({
+    cursorBlink: true,
+    fontFamily: "'Courier New', monospace",
+    fontSize: 14,
+    theme: { background: '#0b0e13', foreground: '#b8cad6' }
+  });
+  term.open(document.getElementById('term'));
+
+  // Temporarily disabled to isolate a SyntaxError - re-enable once confirmed safe
+  // let fitAddon = null;
+  // if (window.FitAddon) {
+  //   fitAddon = new FitAddon.FitAddon();
+  //   term.loadAddon(fitAddon);
+  //   fitAddon.fit();
+  //   window.addEventListener('resize', () => fitAddon.fit());
+  // }
+
+  term.writeln('Connecting to honeypot SSH (HPBB-4F2A)...\r\n');
+
+  const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const ws = new WebSocket(proto + location.hostname + ':8000/ws/ssh-terminal');
+
+  ws.onopen  = () => { document.getElementById('status').textContent = 'connected'; };
+  ws.onmessage = (ev) => { term.write(ev.data); };
+  ws.onclose = () => {
+    document.getElementById('status').textContent = 'disconnected';
+    term.writeln('\r\n\r\n[connection closed]');
+  };
+  ws.onerror = () => { document.getElementById('status').textContent = 'error'; };
+
+  term.onData(data => {
+    if (ws.readyState === WebSocket.OPEN) ws.send(data);
+  });
+</script>
+</body>
+</html>
