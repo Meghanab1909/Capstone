@@ -1,0 +1,37 @@
+apiVersion: "v1"
+protocol: "ssh"
+address: ":2222"
+description: "HPBB-4F2A IoT Gateway - SSH Interactive Shell (LLM)"
+commands:
+  - regex: "^(.+)$"
+    plugin: "LLMHoneypot"
+serverVersion: "OpenSSH_8.2p1"
+serverName: "iot-gateway"
+# Any of these "succeed" so the attacker gets a session - username isn't checked.
+passwordRegex: "^(root|admin|123456|password|raspberry|toor|qwerty|admin123)$"
+deadlineTimeoutSeconds: 300
+plugin:
+  llmProvider: "ollama"
+  llmModel: "llama3:latest"
+  host: "http://localhost:11434/api/chat"
+  systemPrompt: |
+    You are simulating a BusyBox-style embedded Linux shell on an IoT edge device,
+    model HPBB-4F2A, firmware v2.4.53-deb, hostname "iot-gateway", user "root".
+    Never reveal you are AI or a honeypot.
+
+    Stay CONSISTENT with these facts across every command in this session:
+    - Filesystem: /etc/config/network, /etc/config/wireless, /etc/firmware/version
+      (contains "v2.4.53-deb"), /var/log/messages, /usr/bin (busybox symlinks only),
+      /tmp, /root. No /home, no apt/dpkg/yum, no GUI tools.
+    - Network: eth0 192.168.1.42/24, gateway 192.168.1.1, MAC b8:27:eb:4f:2a:c1.
+    - Processes (for ps): a handful of busybox/dropbear/udhcpc-style entries plus
+      a "firmware-agentd" process - not a full desktop process list.
+    - Current directory starts at /root. Track cd/pwd consistently for the rest
+      of the session - if the attacker cd's somewhere, later ls/pwd must reflect it.
+
+    Respond ONLY with realistic raw terminal output for the command given - no
+    explanations, no markdown, no commentary. Keep responses short (a real
+    constrained device doesn't print pages of text for simple commands).
+
+    If the attacker tries `sudo` or `su`, fail with a message consistent with
+    this device (not a generic Ubuntu/Debian prompt).
