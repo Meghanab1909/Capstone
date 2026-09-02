@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Edge Access · IoT Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#c3ccd8;--bg-alt:#b2bdcb;
+    --panel:#f6f8fa;--panel-raised:#e8ecf1;
+    --border:#9fabbc;--border-strong:#76859a;
+    --amber:#b35f16;--amber-soft:#d1841f;--amber-dim:#f2ddb4;
+    --teal:#0b7566;--teal-dim:#c3e8df;
+    --red:#bf3350;--red-dim:#f2ccd4;
+    --text:#3a4658;--text-hi:#0f1522;--muted:#5f6c81;--muted-2:#8d9aac;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Courier New',monospace;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+  ::selection{background:var(--teal-dim);color:var(--text-hi)}
+
+  .app{max-width:920px;margin:0 auto;padding:2rem 1.4rem 4rem;display:flex;flex-direction:column;gap:1.6rem}
+
+  /* ---------- topbar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:.2rem .2rem}
+  .brand{display:flex;align-items:center;gap:.65rem}
+  .brand-mark{width:26px;height:26px;border:1.5px solid var(--text-hi);border-radius:50%;position:relative}
+  .brand-mark::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--text-hi)}
+  .brand-name{font-size:.82rem;color:var(--text-hi);font-weight:600;letter-spacing:.01em}
+  .brand-sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .status{display:flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--teal)}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 5px var(--teal);animation:pulse 2.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- hero ---------- */
+  .hero{border:1px solid var(--border);background:var(--panel);padding:2.8rem 2.2rem 2.4rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1.2rem;position:relative}
+  .eyebrow{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--amber-soft)}
+  .hero h1{font-size:1.7rem;color:var(--text-hi);font-weight:600;letter-spacing:-.01em;line-height:1.35;max-width:32rem}
+  .hero p{font-size:.85rem;color:var(--muted);max-width:30rem;line-height:1.7}
+
+  .cta-row{margin-top:.4rem;display:flex;flex-direction:column;align-items:center;gap:.6rem}
+  .btn{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;padding:.85rem 1.8rem;border:none;color:#fff;background:var(--amber);cursor:pointer;transition:filter .15s,opacity .15s;font-weight:600}
+  .btn:hover:not(:disabled){filter:brightness(1.08)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .corner-btn{position:fixed;top:1rem;right:1rem;z-index:50;font-family:var(--mono);font-size:.56rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2);background:var(--panel);border:1px solid var(--border);padding:.35rem .65rem;cursor:pointer;transition:color .15s,border-color .15s,opacity .15s}
+  .corner-btn:hover:not(:disabled){color:var(--text-hi);border-color:var(--border-strong)}
+  .corner-btn:disabled{opacity:.4;cursor:not-allowed}
+  .status-line{font-family:var(--mono);font-size:.66rem;color:var(--muted-2);letter-spacing:.03em;min-height:1.1em}
+  .status-line.warn{color:var(--amber-soft)}
+  .status-line.ok{color:var(--teal)}
+
+  /* ---------- pipeline ---------- */
+  .pipeline-flow{display:flex;align-items:flex-start;justify-content:center;flex-wrap:wrap;gap:0;margin-top:1.6rem;padding:.5rem 0}
+  .node{display:flex;flex-direction:column;align-items:center;gap:.55rem;width:76px;flex-shrink:0}
+  .node-circle{width:58px;height:58px;border-radius:50%;border:2px solid var(--border-strong);background:var(--panel-raised);display:grid;place-items:center;font-size:1.35rem;opacity:.6;transition:border-color .3s ease,background .3s ease,box-shadow .3s ease,opacity .3s ease}
+  .node-label{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);transition:color .3s ease}
+  .node.active .node-circle{opacity:1;border-color:var(--amber);background:var(--amber-dim);animation:ringPulse 1.3s ease-in-out infinite}
+  .node.active .node-label{color:var(--amber-soft)}
+  @keyframes ringPulse{0%,100%{box-shadow:0 0 0 4px var(--amber-dim)}50%{box-shadow:0 0 0 10px rgba(184,101,28,0)}}
+  .node.done .node-circle{opacity:1;border-color:var(--teal);background:var(--teal-dim)}
+  .node.done .node-label{color:var(--teal)}
+
+  .arrow{width:30px;height:2px;background:var(--border-strong);position:relative;flex-shrink:0;margin-top:27px;transition:background .35s ease}
+  .arrow::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:6px solid var(--border-strong);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:border-color .35s ease}
+  .arrow.filled{background:var(--teal)}
+  .arrow.filled::after{border-left-color:var(--teal)}
+
+  /* ---------- viewport ---------- */
+  .viewport-wrap{border:1px solid var(--border);background:var(--panel);max-height:0;opacity:0;overflow:hidden;transition:max-height .6s ease,opacity .5s ease .1s}
+  .viewport-wrap.open{max-height:900px;opacity:1}
+  .viewport-toolbar{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--border);background:var(--bg-alt)}
+  .toolbar-left{display:flex;align-items:center;gap:.6rem}
+  .toolbar-dots{display:flex;gap:.35rem}
+  .toolbar-dots span{width:7px;height:7px;border-radius:50%;background:var(--muted-2)}
+  .toolbar-dots span:nth-child(1){background:var(--red)}
+  .toolbar-dots span:nth-child(2){background:var(--amber)}
+  .toolbar-dots span:nth-child(3){background:var(--teal)}
+  .toolbar-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .end-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:none;border:1px solid var(--border-strong);padding:.35rem .7rem;cursor:pointer}
+  .end-btn:hover{color:var(--text-hi);border-color:var(--text-hi)}
+  .viewport iframe{width:100%;height:600px;border:0;display:block;background:var(--bg-alt)}
+
+  /* ---------- footer ---------- */
+  .foot{text-align:center;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+  @media (max-width:640px){
+    .hero{padding:2.2rem 1.2rem}
+    .node{width:58px}
+    .node-circle{width:46px;height:46px;font-size:1.05rem}
+    .arrow{width:16px;margin-top:21px}
+  }
+</style>
+</head>
+<body>
+<button class="corner-btn" id="sim-btn" title="Demo — forces a suspicious classification">⚔️ ATTACK SM</button>
+<div class="app">
+
+  <nav class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Edge Access Portal</div>
+        <div class="brand-sub">IoT-HN · Gateway :8080</div>
+      </div>
+    </div>
+    <div class="status"><span class="live-dot"></span>Online</div>
+  </nav>
+
+  <section class="hero">
+    <span class="eyebrow">Network / Device Access</span>
+    <h1>Request a live connection to a network-attached IoT endpoint.</h1>
+    <p>Every request passes through the gateway's inspection pipeline before an endpoint is assigned. The pipeline runs identically for all incoming traffic.</p>
+
+    <div class="cta-row">
+      <button class="btn" id="connect-btn">Establish Connection</button>
+      <span class="status-line" id="status-line">No session active</span>
+    </div>
+
+    <div class="pipeline-flow" id="pipeline-flow"></div>
+  </section>
+
+  <section class="viewport-wrap" id="viewport-wrap">
+    <div class="viewport-toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-dots"><span></span><span></span><span></span></div>
+        <span class="toolbar-label">Endpoint Session · Live</span>
+      </div>
+      <button class="end-btn" id="reset-btn">End Session</button>
+    </div>
+    <div class="viewport">
+      <iframe id="device-frame" title="Connected endpoint" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+    </div>
+  </section>
+
+  <footer class="foot">IoT Honeynet — Edge Access Portal</footer>
+
+</div>
+
+<script>
+(() => {
+  const GATEWAY_STREAM_URL = "http://localhost:8080/api/pipeline-stream";
+
+  // Mirrors the GET-only subset of app.py's ATTACK_PATTERNS — no request
+  // body needed since EventSource can only issue GET. Picking a real path
+  // means path_features (has_sql_pattern etc.) and the honeypot's LLM
+  // narrative actually reflect the simulated attack type, instead of every
+  // Simulate click defaulting to a generic recon hit against "/".
+  const ATTACK_PATTERNS = [
+    { path: "/.env",                                    type: "cve_probe" },
+    { path: "/.git/config",                              type: "cve_probe" },
+    { path: "/phpmyadmin/",                               type: "cve_probe" },
+    { path: "/api/v1/../../etc/passwd",                   type: "path_traversal" },
+    { path: "/cgi-bin/../etc/shadow",                     type: "path_traversal" },
+    { path: "/search?q=1' OR '1'='1",                     type: "sqli" },
+    { path: "/user?id=1 UNION SELECT * FROM users--",     type: "sqli" },
+    { path: "/status",                                    type: "recon" },
+    { path: "/device/info",                               type: "recon" },
+  ];
+
+  // "request" and "endpoint" are local bookend nodes only (never sent by the
+  // gateway) so the diagram reads as a full pipeline. Everything in between
+  // uses generic stage keys — the gateway never tells this page which branch
+  // of the classifier a request took.
+  const NODES = [
+    { key: "request",  icon: "👤", label: "Request"  },
+    { key: "stage_1",  icon: "🔌", label: "Session"  },
+    { key: "stage_2",  icon: "🔍", label: "Analysis" },
+    { key: "stage_3",  icon: "🛡️", label: "Verify"   },
+    { key: "stage_4",  icon: "🔀", label: "Routing"  },
+    { key: "endpoint", icon: "🖥️", label: "Endpoint" },
+  ];
+
+  const STATUS_TEXT = {
+    request:  "Session initialized",
+    stage_1:  "Session initialized",
+    stage_2:  "Inspecting request signature",
+    stage_3:  "Running verification pass",
+    stage_4:  "Allocating endpoint",
+    endpoint: "Link established",
+  };
+
+  const flowEl    = document.getElementById("pipeline-flow");
+  const statusEl  = document.getElementById("status-line");
+  const viewWrap  = document.getElementById("viewport-wrap");
+  const frameEl   = document.getElementById("device-frame");
+  const btnEl     = document.getElementById("connect-btn");
+  const simBtnEl  = document.getElementById("sim-btn");
+  const resetBtn  = document.getElementById("reset-btn");
+
+  function buildFlow() {
+    flowEl.innerHTML = "";
+    NODES.forEach((n, i) => {
+      const node = document.createElement("div");
+      node.className = "node";
+      node.id = `node-${n.key}`;
+      node.innerHTML = `<div class="node-circle">${n.icon}</div><div class="node-label">${n.label}</div>`;
+      flowEl.appendChild(node);
+      if (i < NODES.length - 1) {
+        const arrow = document.createElement("div");
+        arrow.className = "arrow";
+        arrow.id = `arrow-${i}`;
+        flowEl.appendChild(arrow);
+      }
+    });
+  }
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = "status-line" + (cls ? ` ${cls}` : "");
+  }
+
+  function activateNode(key) {
+    const idx = NODES.findIndex(n => n.key === key);
+    if (idx === -1) return;
+    NODES.forEach((n, i) => {
+      const el = document.getElementById(`node-${n.key}`);
+      if (i < idx)      { el.classList.remove("active"); el.classList.add("done"); }
+      else if (i === idx){ el.classList.add("active"); el.classList.remove("done"); }
+      else               { el.classList.remove("active", "done"); }
+    });
+    for (let i = 0; i < idx; i++) document.getElementById(`arrow-${i}`)?.classList.add("filled");
+    if (STATUS_TEXT[key]) setStatus(STATUS_TEXT[key]);
+  }
+
+  function completeAll() {
+    NODES.forEach(n => {
+      document.getElementById(`node-${n.key}`).classList.remove("active");
+      document.getElementById(`node-${n.key}`).classList.add("done");
+    });
+    document.querySelectorAll(".arrow").forEach(a => a.classList.add("filled"));
+    setStatus(STATUS_TEXT.endpoint, "ok");
+  }
+
+  function resetUI() {
+    buildFlow();
+    viewWrap.classList.remove("open");
+    frameEl.srcdoc = "";
+    btnEl.disabled = false;
+    simBtnEl.disabled = false;
+    setStatus("No session active");
+  }
+
+  function beginSession(forceSuspicious) {
+    resetUI();
+    btnEl.disabled = true;
+    simBtnEl.disabled = true;
+    activateNode("request");
+
+    let simPattern = null;
+    let url = GATEWAY_STREAM_URL;
+    if (forceSuspicious) {
+      simPattern = ATTACK_PATTERNS[Math.floor(Math.random() * ATTACK_PATTERNS.length)];
+      url = `${GATEWAY_STREAM_URL}?_force_suspicious=1&_sim_path=${encodeURIComponent(simPattern.path)}`;
+    }
+
+    let settled = false;
+    let gotFirstEvent = false;
+    let es;
+    try { es = new EventSource(url); }
+    catch (e) { runFallback("Gateway unreachable", simPattern); return; }
+
+    // Only guards "the gateway never responded at all" — generous, since a
+    // slow-scoring pipeline (e.g. IsolationForest retraining) can legitimately
+    // take several seconds before its first event. Cleared for good the moment
+    // any event arrives, so a long-running pipeline is never mistaken for a
+    // dead one — a genuine mid-stream failure is instead caught naturally by
+    // the browser's own onerror when the connection actually drops.
+    const noResponseTimer = setTimeout(() => {
+      if (!gotFirstEvent && !settled) { es.close(); runFallback("Gateway unreachable", simPattern); }
+    }, 8000);
+
+    es.onmessage = (e) => {
+      let data;
+      try { data = JSON.parse(e.data); } catch { return; }
+      if (!gotFirstEvent) { gotFirstEvent = true; clearTimeout(noResponseTimer); }
+      if (data.stage === "complete") {
+        settled = true; es.close();
+        finishSession(data.content || "", simPattern ? simPattern.type : null);
+      } else if (data.stage) {
+        activateNode(data.stage);
+      }
+    };
+
+    es.onerror = () => {
+      if (settled) return;
+      settled = true; clearTimeout(noResponseTimer); es.close();
+      runFallback(gotFirstEvent ? "Connection lost" : "Gateway unreachable", simPattern);
+    };
+  }
+
+  function finishSession(html, attackType) {
+    activateNode("stage_4");
+    setTimeout(() => {
+      completeAll();
+      if (attackType) setStatus(`${STATUS_TEXT.endpoint} — simulated: ${attackType}`, "ok");
+      setTimeout(() => {
+        frameEl.srcdoc = html || "<body style='background:#b2bdcb'></body>";
+        viewWrap.classList.add("open");
+      }, 350);
+    }, 250);
+  }
+
+  // Demo-only path: fires the same node sequence locally so the page is
+  // reviewable before the gateway endpoint exists / when it's offline.
+  // Clearly marked in the status line — never presented as a real result.
+  function runFallback(reason, simPattern) {
+    setStatus(`${reason} — running local demo sequence`, "warn");
+    const stageKeys = ["stage_1", "stage_2", "stage_3", "stage_4"];
+    let i = 0;
+    const step = () => {
+      if (i < stageKeys.length) {
+        activateNode(stageKeys[i]);
+        i++;
+        setTimeout(step, 480);
+      } else {
+        const label = simPattern ? `demo honeypot endpoint — ${simPattern.type}` : "demo endpoint";
+        finishSession(`
+          <div style="font-family:'IBM Plex Mono',monospace;background:#b2bdcb;color:#5f6c81;
+                      height:100%;display:flex;align-items:center;justify-content:center;
+                      font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;">
+            ${label} — connect gateway for live content
+          </div>`);
+      }
+    };
+    step();
+  }
+
+  btnEl.addEventListener("click", () => beginSession(false));
+  simBtnEl.addEventListener("click", () => beginSession(true));
+  resetBtn.addEventListener("click", resetUI);
+
+  buildFlow();
+})();
+</script>
+</body>
+</html>
