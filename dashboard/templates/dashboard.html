@@ -347,7 +347,6 @@
     <button class="tb"        onclick="showTab('loadbalancer',this)">⇄&nbsp; Load Balancer</button>
     <button class="tb"        onclick="showTab('gateway',this)">⇢&nbsp; Gateway Decisions</button>
     <button class="tb"        onclick="showTab('aianalysis',this)">✦&nbsp; AI Analysis</button>
-    <button class="tb"        onclick="showTab('attacksim',this)">⚡&nbsp; Attack Sim</button>
 </div>
 
 <div class="container">
@@ -508,33 +507,6 @@
         </div>
     </div>
 </div>
-
-<!-- ══════════ TAB: ATTACK SIM ══════════ -->
-<div id="attacksim" class="tc">
-
-    <div class="srow">
-        <div class="sc"><div class="sl">Total Fired</div><div class="sv cb" id="as-total">0</div><div class="ss">this session</div></div>
-        <div class="sc"><div class="sl">Last Type</div><div class="sv ca" id="as-type" style="font-size:.95rem;padding-top:9px">—</div><div class="ss">attack pattern</div></div>
-        <div class="sc"><div class="sl">Last Status</div><div class="sv cg" id="as-status">—</div><div class="ss">HTTP response</div></div>
-        <div class="sc"><div class="sl">Auto-Fire</div><div class="sv cp" id="as-auto" style="font-size:.95rem;padding-top:9px">Off</div><div class="ss">5× · 3s spacing</div></div>
-    </div>
-
-    <div class="card">
-        <div class="ch"><div class="ct">⚡ Attack Simulator</div></div>
-        <div class="cb-pad">
-            <div class="frow">
-                <button class="btn btnb" onclick="fireAttack(true)">⚡ Fire Single Attack</button>
-                <button class="btn btnb" id="as-autobtn" onclick="toggleAutoFire()">▶ Auto-Fire (5×, 3s)</button>
-            </div>
-            <div id="as-log" style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
-                <div class="empty">No attacks fired yet this session.</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-</div><!-- /container -->
-
 <script>
 // ── TAB SWITCHING ──────────────────────────────────────────
 function showTab(id, btn) {
@@ -564,7 +536,7 @@ async function refreshGW() {
                 <td style="font-family:var(--mono);font-size:.61rem">${l.req_id||'—'}</td>
                 <td style="font-family:var(--mono)">${l.src_ip||'—'}</td>
                 <td><span class="badge ${isSusp?'br':'bg'}">${l.ai_label||'—'}</span></td>
-                <td><span class="badge ${isSusp?'ba':'bb'}">${l.decision||'—'}</span></td>
+                <td><span class="badge ${l.decision==='redirect'?'ba':'bb'}">${l.decision||'—'}</span></td>
                 <td style="color:var(--text-dim);font-size:.63rem">${l.pool||'—'}</td>
                 <td style="text-align:center;color:var(--blue);font-family:var(--mono)">${l.cluster||'—'}</td>
                 <td style="font-family:var(--mono);font-size:.61rem;color:var(--text-dim)">${l.forward_to||'—'}</td>
@@ -686,91 +658,6 @@ async function refreshAI() {
                 </span>
             </div>`;
     }
-}
-
-// ── ATTACK SIM ──────────────────────────────────────────────
-let asTotal = 0;
-let asAutoRunning = false;
- 
-async function fireAttack(openTab) {
-    let newTab = null;
-    if (openTab) {
-        // Must open synchronously, before the await below, or popup blockers kill it.
-        newTab = window.open('about:blank', '_blank');
-        if (newTab) newTab.document.write('<p style="font-family:monospace;padding:20px;color:#888">Loading response…</p>');
-    }
- 
-    try {
-        const r = await fetch('/control/simulate_attack', { method: 'POST' }).then(res => res.json());
- 
-        asTotal++;
-        document.getElementById('as-total').textContent  = asTotal;
-        document.getElementById('as-type').textContent   = r.attack_type || '—';
-        document.getElementById('as-status').textContent = r.status === 'ok' ? ('HTTP ' + r.http_status) : 'error';
- 
-        const log = document.getElementById('as-log');
-        if (asTotal === 1) log.innerHTML = '';
- 
-        const entry = document.createElement('div');
-        entry.className = 'cbox';
-        entry.innerHTML = `
-            <div class="cboxb">
-                <div class="crow"><span class="ckey">Type</span><span class="cval">${r.attack_type || '—'}</span></div>
-                <div class="crow"><span class="ckey">Path</span><span class="cval" style="font-family:var(--mono);font-size:.6rem">${r.method || ''} ${r.path || '—'}</span></div>
-                <div class="crow"><span class="ckey">Src IP</span><span class="cval" style="font-family:var(--mono)">${r.src_ip || '—'}</span></div>
-                <div class="crow"><span class="ckey">Result</span><span class="cval" style="color:${r.status === 'ok' ? 'var(--green)' : 'var(--red)'}">${r.status === 'ok' ? ('HTTP ' + r.http_status) : (r.error || 'error')}</span></div>
-            </div>`;
-        log.prepend(entry);
- 
-        if (newTab) {
-            // Real navigation through the gateway, not painted content -
-            // the address bar will genuinely show :8080. Note: this fires
-            // a SECOND request (the logged one above used spoofed headers
-            // server-side; this one is a real request from your own
-            // browser, so src_ip/User-Agent here will be yours, not the
-            // spoofed attacker identity - browsers can't fake those).
-            // Demo override - guarantees this lands on the honeypot so the
-            // popup reliably shows it, regardless of the AI's actual call
-            // (which still gets logged separately, unaffected by this).
-            const sep = r.path.includes('?') ? '&' : '?';
-            const targetUrl = 'http://' + window.location.hostname + ':8080' + r.path + sep + '_force_suspicious=1';
-            if (r.method === 'POST') {
-                const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                const params = new URLSearchParams(r.body || '');
-                let inputs = '';
-                for (const [key, value] of params.entries()) {
-                    inputs += `<input type="hidden" name="${esc(key)}" value="${esc(value)}">`;
-                }
-                newTab.document.open();
-                newTab.document.write(`<form id="navform" method="POST" action="${esc(targetUrl)}">${inputs}</form><script>document.getElementById('navform').submit();<\/script>`);
-                newTab.document.close();
-            } else {
-                newTab.location.href = targetUrl;
-            }
-        }
-        return r;
-    } catch (e) {
-        console.error('Attack sim error:', e);
-        document.getElementById('as-status').textContent = 'error';
-        if (newTab) newTab.close();
-    }
-}
- 
-async function toggleAutoFire() {
-    if (asAutoRunning) return;
-    asAutoRunning = true;
-    document.getElementById('as-auto').textContent = 'Running…';
-    const btn = document.getElementById('as-autobtn');
-    btn.disabled = true;
- 
-    for (let i = 0; i < 5; i++) {
-        await fireAttack(false);   // never open tabs here — popup blockers would kill calls 2-5 anyway
-        if (i < 4) await new Promise(res => setTimeout(res, 3000));
-    }
- 
-    asAutoRunning = false;
-    document.getElementById('as-auto').textContent = 'Off';
-    btn.disabled = false;
 }
  
 // ── AUTO REFRESH ───────────────────────────────────────────
