@@ -1,0 +1,6 @@
+{"timestamp": "2026-08-19 18:09:34.193083", "req_id": 1787143173927, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}
+{"timestamp": "2026-08-19 18:10:37.525817", "req_id": 1787143235954, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}
+{"timestamp": "2026-08-19 18:13:37.971838", "req_id": 1787143416396, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5003", "pool": "real", "cluster": 2}
+{"timestamp": "2026-08-19 18:14:12.569132", "req_id": 1787143450896, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}
+{"timestamp": "2026-08-19 18:15:47.690114", "req_id": 1787143546068, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}
+{"timestamp": "2026-08-19 18:32:10.221554", "req_id": 1787144528552, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}

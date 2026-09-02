@@ -11,6 +11,10 @@ import requests
 from requests.adapters import HTTPAdapter
 import socket
 from urllib.parse import urlparse, parse_qs
+from http.server import ThreadingHTTPServer
+import threading
+
+_ai_lock = threading.Lock()
 
 LABELED_CSV     = "logs/traffic_labeled.csv"
 GATEWAY_LOG     = "logs/gateway.log"
@@ -173,11 +177,15 @@ def extract_path_features(path: str, body: bytes) -> dict:
         "has_recon_cve_pattern": int(any(
             x in combined for x in ["wp-", "phpmyadmin", "xmlrpc", ".env", ".git", "admin", "login"]
         )),
+        "has_rce_pattern": int(any(
+            x in combined for x in [
+                "cmd=", "exec", "shell", "wget", "curl", "bash",
+                "&&", "|", ";", "`", "$(",
+                "cat ", "chmod ", "rm ", "nc ", "/bin/sh",
+            ]
+        )),
     }
 
-
-# -----------------------------------------------------------------------
-# FLOW CSV
 # -----------------------------------------------------------------------
 # FLOW CSV
 # -----------------------------------------------------------------------
@@ -230,8 +238,8 @@ def log_event(req_id, src_ip, label, target, cluster_idx, pool):
         "timestamp":  str(datetime.now()),
         "req_id":     int(req_id),
         "src_ip":     str(src_ip),
-        "ai_label":   "benign" if label == 0 else "suspicious",
-        "decision":   "allow"  if label == 0 else "redirect",
+        "ai_label":   "suspicious" if label == 1 else "benign",
+        "decision":   "allow" if pool == "real" else "redirect",
         "forward_to": target,
         "pool":       pool,
         "cluster":    cluster_idx + 1,
@@ -251,149 +259,12 @@ def log_event(req_id, src_ip, label, target, cluster_idx, pool):
 # consistent, fast, and genuinely dynamic-looking response.
 # Placeholders use __TOKEN__ (not .format()) to avoid clashing with CSS braces.
 # -----------------------------------------------------------------------
-HONEYPOT_PAGE_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Edge Device Portal</title>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#06080b;--panel:#0b0e13;--panel-alt:#0e1218;
-      --border:#1a2430;--border-hi:#253444;
-      --green:#00e87a;--green-dim:#00512b;
-      --amber:#f5a623;--amber-dim:#7a5010;
-      --red:#ff3b55;--red-dim:#6b1020;
-      --blue:#38b6ff;--blue-dim:#0d3d5a;
-      --muted:#3a5060;--text:#b8cad6;--text-hi:#ddeaf2;
-    }
-    html,body{background:var(--bg);color:var(--text);font-family:'Courier New',Courier,monospace;min-height:100vh}
-    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:200}
-    .page{max-width:780px;margin:0 auto;padding:2rem 1.2rem;display:flex;flex-direction:column;gap:1.1rem;animation:rise .5s ease both}
-    @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-    .card{border:1px solid var(--border);background:var(--panel);position:relative}
-    .card::before,.card::after,.c-br,.c-bl{content:'';position:absolute;width:12px;height:12px;border-style:solid;border-color:var(--green)}
-    .card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
-    .card::after{top:-1px;right:-1px;border-width:2px 2px 0 0}
-    .c-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
-    .c-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.1rem;border-bottom:1px solid var(--border);background:#080b0f}
-    .topbar-left{display:flex;align-items:center;gap:.75rem}
-    .logo{width:28px;height:28px;border:2px solid var(--green);display:grid;place-items:center;flex-shrink:0}
-    .logo::before{content:'';width:10px;height:10px;background:var(--green);clip-path:polygon(50% 0%,100% 100%,0% 100%)}
-    .device-id{font-size:.6rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;line-height:1.3}
-    .device-name{font-size:.88rem;color:var(--text-hi);letter-spacing:.05em}
-    .pills{display:flex;gap:.5rem}
-    .pill{display:flex;align-items:center;gap:.35rem;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border:1px solid}
-    .pill-green{border-color:var(--green-dim);color:var(--green)}
-    .dot{width:6px;height:6px;border-radius:50%;animation:blink 1.8s ease-in-out infinite}
-    .dot-green{background:var(--green)}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-    .subbar{padding:.4rem 1.1rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.25);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-    .crumb{font-size:.62rem;color:var(--muted);letter-spacing:.08em}
-    .crumb em{color:var(--green);font-style:normal}
-    .tag{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:.12rem .45rem;border:1px solid var(--border);color:var(--muted)}
-    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
-    .metric{background:var(--panel);padding:.85rem 1rem;display:flex;flex-direction:column;gap:.2rem}
-    .m-label{font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
-    .m-val{font-size:1.6rem;line-height:1;font-family:'Courier New',monospace}
-    .m-sub{font-size:.55rem;color:var(--muted)}
-    .val-green{color:var(--green)}.val-amber{color:var(--amber)}.val-blue{color:var(--blue)}
-    .sec-head{display:flex;align-items:center;justify-content:space-between;padding:.45rem .85rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.3)}
-    .sec-title{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-    .sec-badge{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:.1rem .4rem;border:1px solid var(--border);color:var(--muted);background:transparent}
-    .info-body{padding:.8rem .85rem;display:flex;flex-direction:column;gap:.4rem}
-    .info-row{display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border)}
-    .info-row:last-child{border-bottom:none}
-    .info-key{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
-    .info-val{font-size:.75rem;color:var(--text)}.info-val-g{color:var(--green)}
-    .log-body{padding:.7rem .85rem;font-size:.68rem;line-height:1.95;color:var(--muted);background:#070a0d}
-    .log-line{display:flex;gap:.85rem}
-    .log-time{color:#1e3040;min-width:74px}
-    .log-ok{color:var(--green)}.log-info{color:var(--blue)}.log-warn{color:var(--amber)}.log-err{color:var(--red)}
-    .actions{padding:.85rem;display:flex;gap:.65rem;flex-wrap:wrap}
-    .btn{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:.5rem 1rem;border:1px solid;cursor:pointer;background:transparent;text-decoration:none;display:inline-block;transition:background .15s,color .15s}
-    .btn-green{border-color:var(--green);color:var(--green)}
-    .btn-green:hover{background:var(--green);color:var(--bg)}
-    .btn-muted{border-color:var(--border);color:var(--muted)}
-    .btn-muted:hover{border-color:var(--muted);color:var(--text)}
-    .footer{border-top:1px solid var(--border);padding:.55rem 1.1rem;background:#080b0f;display:flex;justify-content:space-between;align-items:center}
-    .footer-txt{font-size:.55rem;color:var(--muted);letter-spacing:.07em}
-    .led-row{display:flex;gap:.4rem}
-    .led{width:7px;height:7px;border-radius:50%}
-    .led-g{background:var(--green);box-shadow:0 0 4px var(--green);animation:blink 2s infinite}
-    .led-a{background:var(--amber);box-shadow:0 0 4px var(--amber);animation:blink 3s infinite .5s}
-    .led-off{background:#111}
-  </style>
-</head>
-<body>
-<div class="page">
-  <div class="card">
-    <div class="c-br"></div><div class="c-bl"></div>
-    <div class="topbar">
-      <div class="topbar-left">
-        <div class="logo"></div>
-        <div>
-          <div class="device-id">Model: HPBB-4F2A &nbsp;|&nbsp; SN-0xBEE1</div>
-          <div class="device-name">Edge Device Portal</div>
-        </div>
-      </div>
-      <div class="pills"><div class="pill pill-green"><div class="dot dot-green"></div>Online</div></div>
-    </div>
-    <div class="subbar">
-      <div class="crumb">root / <em>device</em> / status</div>
-      <div class="tag">fw v2.4.53-deb</div>
-      <div class="tag">eth0 &middot; 192.168.1.42</div>
-      <div class="tag">IPv4</div>
-    </div>
-    <div class="metrics">
-      <div class="metric"><div class="m-label">System Status</div><div class="m-val val-green">OK</div><div class="m-sub">All subsystems nominal</div></div>
-      <div class="metric"><div class="m-label">Signal Strength</div><div class="m-val val-blue">-62</div><div class="m-sub">dBm &middot; RSSI Good</div></div>
-      <div class="metric"><div class="m-label">Uptime</div><div class="m-val val-amber">00:01</div><div class="m-sub">00d 00h 01m &middot; since last boot</div></div>
-    </div>
-    <div class="sec-head"><span class="sec-title">Device Info</span><span class="sec-badge">SYS &middot; RUNTIME</span></div>
-    <div class="info-body">
-      <div class="info-row"><span class="info-key">Model</span><span class="info-val">HPBB-4F2A</span></div>
-      <div class="info-row"><span class="info-key">Firmware</span><span class="info-val">v2.4.53-deb</span></div>
-      <div class="info-row"><span class="info-key">IP Address</span><span class="info-val">192.168.1.42</span></div>
-      <div class="info-row"><span class="info-key">MAC</span><span class="info-val">b8:27:eb:4f:2a:c1</span></div>
-      <div class="info-row"><span class="info-key">Protocol</span><span class="info-val">HTTP &middot; SSH &middot; TCP &middot; IPv4</span></div>
-      <div class="info-row"><span class="info-key">Status</span><span class="info-val info-val-g">Operational</span></div>
-    </div>
-    <div class="sec-head"><span class="sec-title">System Log</span><span class="sec-badge">RUNTIME &middot; LIVE</span></div>
-    <div class="log-body">
-      <div class="log-line"><span class="log-time">00:00:01</span><span class="log-ok">[BOOT]</span><span>Kernel loaded. Mounting filesystems...</span></div>
-      <div class="log-line"><span class="log-time">00:00:02</span><span class="log-ok">[INIT]</span><span>Network interface eth0 UP</span></div>
-      <div class="log-line"><span class="log-time">00:00:03</span><span class="log-info">[DHCP]</span><span>Address acquired: 192.168.1.42</span></div>
-      <div class="log-line"><span class="log-time">00:00:04</span><span class="log-ok">[SVC]</span><span>Core services initialised</span></div>
-      <div class="log-line"><span class="log-time">00:00:05</span><span class="log-ok">[HTTP]</span><span>Listener ready on :80</span></div>
-      <div class="log-line"><span class="log-time">00:00:06</span><span class="log-ok">[NET]</span><span>All interfaces nominal &mdash; portal UP</span></div>
-      <div class="log-line"><span class="log-time">__NOW__</span><span class="__STATUS_CLASS__">[__STATUS_TAG__]</span><span>__LOG_LINE__</span></div>
-    </div>
-    <div class="actions">
-      <a href="/status" class="btn btn-green">&#9654; Status</a>
-      <button class="btn btn-muted" onclick="location.reload()">&#8634; Refresh</button>
-      <button class="btn btn-green" onclick="openSSHConsole()">&#128187; SSH Console</button>
-    </div>
-    <div class="footer">
-      <div class="footer-txt">HPBB-4F2A &middot; 192.168.1.42 &middot; fw v2.4.53-deb</div>
-      <div class="led-row">
-        <div class="led led-g" title="Power"></div>
-        <div class="led led-a" title="Activity"></div>
-        <div class="led led-off" title="No Error"></div>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-  function openSSHConsole() {
-    window.open('http://' + window.location.hostname + ':8000/ssh-terminal', '_blank');
-  }
-</script>
-</body>
-</html>"""
-
+HONEYPOT_TEMPLATE_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "honeypot", "templates", "edge-device-portal.html"
+)
+with open(HONEYPOT_TEMPLATE_PATH, "r", encoding="utf-8") as f:
+    HONEYPOT_PAGE_TEMPLATE = f.read()
+    
 _STATUS_CLASS_MAP = {"ok": "log-ok", "warn": "log-warn", "err": "log-err"}
 _STATUS_TAG_MAP   = {"ok": "INFO", "warn": "ALERT", "err": "BLOCKED"}
 
@@ -600,10 +471,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
     def _read_body(self) -> bytes:
         n = int(self.headers.get("Content-Length", 0))
         return self.rfile.read(n) if n > 0 else b""
-
-    def _handle(self, method: str):
+        
+    def run_pipeline(self, method, forward_path=None):
+        fp = forward_path if forward_path is not None else self.path
         client_ip = self.client_address[0]
-
         req_id        = int(time.time() * 1000)
         src_ip        = client_ip
         src_port      = self.client_address[1]
@@ -620,30 +491,27 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         flow = [req_id, src_ip, GATEWAY_IP, src_port, dst_port, 6,
                 src_bytes, 0, flow_duration, packet_count, conn_state, timestamp,
-                "", "", "", "", "", "", "",   # label (filled in later by hybrid_ai.py) +
-                                               # duration/missed_bytes/src_pkts/src_ip_bytes/
-                                               # dst_pkts/dst_ip_bytes (gateway never measures these)
+                "", "", "", "", "", "", "",
                 method, path_features["path_length"],
                 path_features["has_sql_pattern"], path_features["has_xss_pattern"],
                 path_features["has_traversal_pattern"], path_features["has_rce_pattern"],
                 path_features["has_recon_cve_pattern"]]
 
-        write_flow(flow)
-        try:
-            subprocess.run(["python3", AI_SCRIPT], timeout=5)
-        except Exception as e:
-            print(f"[AI] {e}")
-        time.sleep(0.1)
+        yield "stage_1", {}
+        
+        with _ai_lock:
+            write_flow(flow)
+            try:
+                subprocess.run(["python3", AI_SCRIPT], timeout=5)
+            except Exception as e:
+                print(f"[AI] {e}")
+            time.sleep(0.1)
+            label = get_label(req_id)
 
-        label = get_label(req_id)
-        ai_label = label  # keep the AI's real prediction for logging, separate from routing
+        ai_label = label
 
-        # TESTING OVERRIDE: Attack Sim guarantees honeypot routing for demo
-        # purposes, via either the header (server-side spoofed-IP fire) or
-        # a query param (real browser navigation can't set custom headers,
-        # so this is how the VISIBLE popup tab triggers the same override).
-        # Does not affect real traffic (neither present = normal AI routing)
-        # and does not change what gets logged as the AI's actual prediction.
+        yield "stage_2", {}
+
         force_suspicious = (
             self.headers.get("X-Force-Suspicious") == "1"
             or parse_qs(urlparse(self.path).query).get("_force_suspicious", ["0"])[0] == "1"
@@ -651,9 +519,9 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if force_suspicious:
             label = 1
 
-        # Clean path with the test-only param stripped, so it doesn't leak into
-        # analysis narrative or forwarded requests as if a real attacker sent it.
         clean_path = re.sub(r"([?&])_force_suspicious=1&?", r"\1", self.path).rstrip("?&")
+
+        yield "stage_3", {}
 
         if label == 0:
             _ip_counts[src_ip]["benign"] += 1
@@ -663,7 +531,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
             pool = "honeypot"
 
         target, cluster_idx = next_server(pool)
-        log_event(req_id, src_ip, ai_label, target, cluster_idx, pool)
+        #print(f"[DEBUG] req_id={req_id} label={label} ai_label={ai_label} pool={pool} force_suspicious={force_suspicious}")
+        log_event(req_id, src_ip, label, target, cluster_idx, pool)
+
+        yield "stage_4", {}
 
         fwd_headers = {k: v for k, v in self.headers.items()
                        if k.lower() not in ("host","content-length","transfer-encoding","x-force-suspicious")}
@@ -678,7 +549,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             fwd_headers["X-Gateway-Label"]    = "suspicious"
             fwd_headers["X-Gateway-FlowMeta"] = flow_meta_str
 
-        raw_content = self._forward(method, target, pool, fwd_headers, body)
+        raw_content = self._forward(method, target, pool, fwd_headers, body, path=fp)
 
         if pool == "honeypot":
             print(f"[BEELZEBUB] req={req_id} contacted {target} (container running Beelzebub) "
@@ -689,7 +560,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
             log_line, status, snippet_format = parse_honeypot_snippet(raw_content)
             if log_line is None:
                 print(f"[BEELZEBUB] req={req_id} response had no usable content - using generic log line")
-                print(f"[DEBUG] req={req_id} raw_content (first 400 chars):\n{raw_content[:400]}")
                 log_line, status, snippet_format = "Unusual request pattern detected", "warn", "none"
             else:
                 print(f"[BEELZEBUB] req={req_id} LLM-generated content used ({snippet_format}): {log_line!r} ({status})")
@@ -698,16 +568,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 "source": "honeypot_llm", "log_line": log_line,
                 "status": status, "format": snippet_format,
             }
-
-            # Independent of the snippet above - this is the detailed,
-            # structured analysis that feeds ai_analysis.log / the dashboard.
             analysis = gateway_llm_analysis(req_id, src_ip, clean_path, flow_meta_str)
             persist_analysis(req_id, src_ip, flow, analysis, honeypot_engagement)
 
-        # Encode response once — used for both writing and dst_bytes measurement
         content_bytes = content.encode("utf-8", errors="replace")
-
-        # Update dst_bytes in CSV with actual response size for better RF training data
         try:
             import csv as _csv
             rows = list(_csv.reader(open(LABELED_CSV)))
@@ -721,9 +585,16 @@ class GatewayHandler(BaseHTTPRequestHandler):
             with open(LABELED_CSV, "w", newline="") as f:
                 _csv.writer(f).writerows(rows)
         except Exception:
-            pass  # non-critical
+            pass
 
-        # Send response — ignore BrokenPipeError (client disconnected mid-response)
+        yield "complete", {"content": content}
+
+    def _handle(self, method: str):
+        content = None
+        for stage, data in self.run_pipeline(method):
+            if stage == "complete":
+                content = data["content"]
+        content_bytes = content.encode("utf-8", errors="replace")
         try:
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -731,8 +602,27 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self.wfile.write(content_bytes)
         except BrokenPipeError:
             pass
+            
+    def _handle_pipeline_stream(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:5173")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        try:
+            for stage, data in self.run_pipeline("GET", forward_path="/"):
+                self.wfile.write(f"data: {json.dumps({'stage': stage, **data})}\n\n".encode())
+                self.wfile.flush()
+        except BrokenPipeError:
+            pass
 
-    def _forward(self, method, target, pool, headers, body) -> str:
+    def do_GET(self):
+        if self.path.startswith("/api/pipeline-stream"):
+            self._handle_pipeline_stream()
+        else:
+            self._handle("GET")
+
+    def _forward(self, method, target, pool, headers, body, path=None) -> str:
         servers = {"real": REAL_SERVERS, "honeypot": HONEYPOT_SERVERS, "dummy": DUMMY_SERVERS}[pool]
         tried   = set()
         for _ in range(len(servers)):
@@ -742,7 +632,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
             try:
                 resp = _session.request(
                     method=method,
-                    url=target + self.path,
+                    url=target + path,
                     headers=headers,
                     data=body or None,
                     timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
@@ -763,7 +653,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
         return ("<html><body><h3>Service temporarily unavailable.</h3>"
                 "<p>All backend nodes unreachable — check docker compose ps.</p></body></html>")
 
-    def do_GET(self):  self._handle("GET")
     def do_POST(self): self._handle("POST")
     def do_HEAD(self): self._handle("HEAD")
     def log_message(self, fmt, *args): pass
@@ -775,7 +664,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 def main():
     os.makedirs("logs", exist_ok=True)
     startup_checks()
-    server = HTTPServer(("0.0.0.0", GATEWAY_PORT), GatewayHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", GATEWAY_PORT), GatewayHandler)
     print(f"[GATEWAY] Listening on 0.0.0.0:{GATEWAY_PORT}")
     server.serve_forever()
 
