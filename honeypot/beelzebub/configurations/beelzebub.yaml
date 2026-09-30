@@ -3,7 +3,7 @@ core:
     debug: false
     debugReportCaller: false
     logDisableTimestamp: true
-    logsPath: ./logs
+    logsPath: ./logs/beelzebub.log
   tracings:
     rabbit-mq:
       enabled: false
