@@ -11,6 +11,10 @@ import asyncio
 import paramiko
 from datetime import datetime
 import random
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+import honeypot_analyser as ha
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="dashboard/templates")
@@ -18,6 +22,7 @@ templates = Jinja2Templates(directory="dashboard/templates")
 CSV_PATH = "logs/traffic_labeled.csv"
 LOGS_PATH = "logs/ai_logs.json"
 METRICS_PATH = "logs/ai_metrics.json"
+HONEYPOT_REPORT_PATH = "logs/honeypot_report.json"
 
 REQUEST_ID = 0
 
@@ -389,3 +394,225 @@ async def ssh_terminal_ws(websocket: WebSocket):
             client.close()
         except Exception:
             pass
+
+@app.get("/honeypot/report")
+def get_honeypot_report():
+    if not os.path.exists(HONEYPOT_REPORT_PATH):
+        return {"status": "no_report", "sessions": [], "total_sessions": 0}
+    try:
+        with open(HONEYPOT_REPORT_PATH) as f:
+            return json.load(f)
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+ 
+ 
+@app.post("/honeypot/generate_report/{req_id}")
+def generate_report(req_id: str):
+    """
+    1. Find the record with matching req_id in ai_analysis.log
+    2. Send it to Ollama (llama3:8b) for deep analysis
+    3. Save result to logs/honeypot_report.json
+    4. Return the result
+    """
+    # ── Step 1: find the record ──────────────────────────────
+    record = None
+    if os.path.exists(AI_ANALYSIS_LOG):
+        with open(AI_ANALYSIS_LOG) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if str(obj.get("req_id", "")) == str(req_id):
+                        record = obj
+                        break
+                except Exception:
+                    continue
+ 
+    if not record:
+        return {"error": f"No record found for req_id {req_id}"}
+ 
+    # ── Step 2: build a richer prompt using the full record ──
+    analysis = record.get("analysis", {})
+    flow     = record.get("flow", {})
+    hp       = record.get("honeypot_engagement", {})
+ 
+    alert_id = f"IDS-{str(record.get('timestamp',''))[:10].replace('-','')}-{str(record.get('req_id',''))[-6:]}"
+ 
+    existing = record.get('analysis', {})
+    why_list = existing.get('why_suspicious', [])
+    baseline = existing.get('benign_baseline_comparison', '')
+    hyp      = existing.get('attack_hypothesis', existing.get('attack_type', 'unknown'))
+    prior    = flow.get('prior_suspicious_count', 0)
+    src_ip   = record.get('src_ip', '?')
+    dst_port = str(flow.get('dst_port', '?'))
+    src_port = str(flow.get('src_port', '?'))
+    conn     = flow.get('conn_state', '?')
+    pkts     = flow.get('packet_count', '?')
+    ts       = record.get('timestamp', '')
+ 
+    # Keep the prompt concise — llama3:8b works better with focused prompts
+    prompt = f"""You are a cybersecurity analyst. Write a formal threat report for this IoT honeypot alert.
+Return ONLY a JSON object, no other text.
+ 
+ALERT:
+- req_id: {record.get('req_id')}
+- timestamp: {ts}
+- src_ip: {src_ip}, src_port: {src_port}
+- dst_port: {dst_port}, conn_state: {conn}, packets: {pkts}
+- initial_classification: {hyp}
+- initial_threat_level: {existing.get('threat_level', 'unknown')}
+- initial_confidence: {existing.get('confidence', 0)}
+- why_flagged: {'; '.join(why_list)}
+- baseline_note: {baseline}
+- prior_suspicious_from_this_ip: {prior}
+- honeypot_engaged: {hp.get('source','?')} status={hp.get('status','?')}
+ 
+Return this JSON (fill EVERY field — no nulls, no dashes):
+{{
+  "alert_id": "{alert_id}",
+  "threat_level": "HIGH",
+  "attack_type": "write the specific attack name e.g. SQL Injection, CVE Probe, Path Traversal",
+  "confidence": 80,
+  "status": "INVESTIGATING",
+  "summary": "Write 2-3 sentences describing what happened, what was targeted, and the risk to this IoT device.",
+  "attacker_intent": "One sentence: what the attacker was trying to achieve.",
+  "key_findings": [
+    "Describe the specific request/payload observed",
+    "Describe source IP behaviour and {prior} prior suspicious requests",
+    "Describe connection pattern: {conn} state, {pkts} packets",
+    "Describe what the honeypot returned to the attacker",
+    "Describe deviation from normal IoT traffic on port {dst_port}"
+  ],
+  "why_suspicious": {json.dumps(why_list) if why_list else '["Anomalous request pattern", "Deviates from IoT baseline", "Matches known attack signature"]'},
+  "benign_baseline_comparison": "Write: how does normal traffic on port {dst_port} from IoT devices differ from this request?",
+  "attack_hypothesis": "Write the specific technique or CVE e.g. OWASP A03:2021 Injection, T1190, CVE probe",
+  "severity_reasoning": "Write one sentence explaining why this is the chosen threat level based on the evidence.",
+  "recommended_action": "Step 1: specific action -> Step 2: specific action -> Step 3: specific action",
+  "ioc": {{
+    "src_ip": "{src_ip}",
+    "src_port": "{src_port}",
+    "dst_port": "{dst_port}",
+    "protocol": "TCP",
+    "conn_state": "{conn}",
+    "packet_count": "{pkts}"
+  }}
+}}"""
+ 
+    try:
+        resp = requests.post(
+            "http://127.0.0.1:11434/api/chat",
+            json={
+                "model": "llama3:8b",
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "options": {"temperature": 0.1},
+            },
+            timeout=300,  # 5 minutes — llama3:8b can be slow under memory pressure
+        )
+        resp.raise_for_status()
+        raw = resp.json()["message"]["content"].strip()
+        print(f"[OLLAMA RAW] {raw[:400]}")
+        import re as _re
+        content = _re.sub(r"^```(?:json)?\s*", "", raw)
+        content = _re.sub(r"\s*```$", "", content)
+        j0 = content.find('{')
+        j1 = content.rfind('}')
+        if j0 != -1 and j1 != -1:
+            content = content[j0:j1+1]
+        deep_analysis = json.loads(content)
+        print(f"[OLLAMA KEYS] {list(deep_analysis.keys())}")
+    except Exception as e:
+        print(f"[OLLAMA FAIL] {type(e).__name__}: {e}")
+        # Build a useful report from the data we already have, even without Ollama
+        deep_analysis = {
+            "alert_id":                  alert_id,
+            "threat_level":              (existing.get("threat_level") or "MEDIUM").upper(),
+            "attack_type":               hyp or "Unknown",
+            "confidence":                existing.get("confidence", 0),
+            "status":                    "INVESTIGATING",
+            "summary":                   (f"Suspicious traffic detected from {src_ip} targeting port {dst_port}. "
+                                          f"The request was flagged as {hyp} with {prior} prior suspicious "
+                                          f"requests from this source. Honeypot engagement confirmed."),
+            "attacker_intent":           f"Attempting {hyp} against IoT gateway on port {dst_port}.",
+            "key_findings":              why_list or ["Anomalous request pattern detected", "Deviates from IoT baseline"],
+            "why_suspicious":            why_list or [],
+            "benign_baseline_comparison": baseline or "Request deviates from normal IoT traffic patterns.",
+            "attack_hypothesis":         hyp or "Unknown attack vector",
+            "severity_reasoning":        f"Classified as {existing.get('threat_level','MEDIUM')} based on initial gateway AI assessment with {existing.get('confidence',0)}% confidence.",
+            "recommended_action":        existing.get("recommended_action", f"Block {src_ip} -> Review logs -> Monitor port {dst_port}"),
+            "ioc": {
+                "src_ip":       src_ip,
+                "src_port":     src_port,
+                "dst_port":     dst_port,
+                "protocol":     "TCP",
+                "conn_state":   conn,
+                "packet_count": str(pkts)
+            },
+            "error":  f"Ollama timeout — report generated from existing analysis data. ({type(e).__name__})",
+            "source": "fallback_existing"
+        }
+ 
+    # ── Post-process: fill any missing fields from the raw record ──────
+    # So the report never shows "—" for data we already have
+    if 'ioc' not in deep_analysis or not deep_analysis.get('ioc'):
+        deep_analysis['ioc'] = {
+            'src_ip': src_ip, 'src_port': src_port,
+            'dst_port': dst_port, 'protocol': 'TCP',
+            'conn_state': conn, 'packet_count': str(pkts)
+        }
+    else:
+        ioc = deep_analysis['ioc']
+        ioc.setdefault('src_ip',       src_ip)
+        ioc.setdefault('src_port',     src_port)
+        ioc.setdefault('dst_port',     dst_port)
+        ioc.setdefault('conn_state',   conn)
+        ioc.setdefault('packet_count', str(pkts))
+ 
+    if not deep_analysis.get('alert_id'):
+        deep_analysis['alert_id'] = alert_id
+    if not deep_analysis.get('why_suspicious') and why_list:
+        deep_analysis['why_suspicious'] = why_list
+    if not deep_analysis.get('benign_baseline_comparison') and baseline:
+        deep_analysis['benign_baseline_comparison'] = baseline
+    if not deep_analysis.get('attack_type') and hyp:
+        deep_analysis['attack_type'] = hyp
+    if not deep_analysis.get('summary') and deep_analysis.get('attacker_intent'):
+        deep_analysis['summary'] = deep_analysis['attacker_intent']
+    if not deep_analysis.get('key_findings') and why_list:
+        deep_analysis['key_findings'] = why_list
+ 
+    
+ 
+ 
+    # ── Step 3: save to report ───────────────────────────────
+    result = {
+        "record":      record,
+        "analysis":    deep_analysis,
+        "analysed_at": str(__import__('datetime').datetime.utcnow()),
+    }
+ 
+    report = {"generated_at": None, "total_sessions": 0, "sessions": []}
+    if os.path.exists(HONEYPOT_REPORT_PATH):
+        try:
+            with open(HONEYPOT_REPORT_PATH) as f:
+                report = json.load(f)
+        except Exception:
+            pass
+ 
+    existing_ids = [str(s.get("record", {}).get("req_id", "")) for s in report["sessions"]]
+    if str(req_id) in existing_ids:
+        idx = existing_ids.index(str(req_id))
+        report["sessions"][idx] = result
+    else:
+        report["sessions"].append(result)
+ 
+    report["total_sessions"] = len(report["sessions"])
+    report["generated_at"]   = str(__import__('datetime').datetime.utcnow())
+ 
+    with open(HONEYPOT_REPORT_PATH, "w") as f:
+        json.dump(report, f, indent=2)
+ 
+    return result
+

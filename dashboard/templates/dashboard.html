@@ -238,33 +238,64 @@
         tbody tr:last-child td { border-bottom: none; }
 
         /* ── AI CARDS ────────────────────────────────── */
-        .agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+        .agrid { display: flex; flex-direction: column; gap: 10px; }
+        /* AI Analysis row cards */
         .acard {
             background: var(--surface2);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             border-left: 3px solid var(--text-dim);
-            overflow: hidden;
             transition: border-color .15s;
+            overflow: hidden;
         }
         .acard.critical { border-left-color: var(--red); }
         .acard.high     { border-left-color: var(--amber); }
         .acard.medium   { border-left-color: var(--blue); }
         .acard.low      { border-left-color: var(--green); }
-        .acard:hover    { border-color: var(--border-hi); border-left-width: 3px; }
-        .ahead {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px; border-bottom: 1px solid var(--border);
-            background: rgba(0,0,0,.15);
+        .acard:hover    { border-color: var(--border-hi); }
+        .acard-row { display: flex; align-items: stretch; }
+        .acard-lvl {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 12px 14px; gap: 5px;
+            flex-shrink: 0; min-width: 82px;
+            border-right: 1px solid var(--border);
+            background: rgba(0,0,0,.12);
         }
-        .atime { font-size: .58rem; color: var(--text-dim); font-family: var(--mono); }
-        .abody { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .arow { display: flex; gap: 10px; align-items: flex-start; }
-        .akey { font-size: .58rem; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); min-width: 110px; padding-top: 2px; flex-shrink: 0; }
-        .aval { font-size: .68rem; color: var(--text-hi); flex: 1; line-height: 1.6; }
-        .itags { display: flex; flex-wrap: wrap; gap: 5px; }
-        .itag { font-size: .58rem; letter-spacing: .04em; padding: .18rem .5rem; border: 1px solid var(--border-hi); color: var(--text); border-radius: 3px; }
-        .cbar  { height: 3px; background: var(--border); margin-top: 5px; border-radius: 99px; }
+        .acard-main {
+            flex: 1; display: grid;
+            grid-template-columns: 1fr 1.6fr 1.6fr 0.7fr;
+            gap: 0; min-width: 0;
+        }
+        .acard-col {
+            padding: 11px 14px;
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .acard-col:last-child { border-right: none; }
+        .akey { font-size: .56rem; letter-spacing: .09em; text-transform: uppercase; color: var(--text-dim); }
+        .aval { font-size: .67rem; color: var(--text-hi); line-height: 1.5; }
+        .aval.muted { color: var(--text); }
+        .itags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+        .itag  { font-size: .55rem; padding: .12rem .4rem; border: 1px solid var(--border-hi); color: var(--text); border-radius: 3px; }
+        .acard-action {
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px 14px; border-left: 1px solid var(--border);
+            flex-shrink: 0; min-width: 110px;
+        }
+        .view-report-btn {
+            font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+            padding: .4rem .8rem; border: 1px solid rgba(196,164,255,.35);
+            color: var(--purple); background: var(--purple-soft);
+            cursor: pointer; border-radius: var(--radius-sm);
+            transition: all .15s; font-family: var(--sans); white-space: nowrap;
+        }
+        .view-report-btn:hover { background: rgba(196,164,255,.2); }
+        .view-report-btn:disabled { opacity: .5; cursor: default; }
+        .acard-conf { font-size: .62rem; font-family: var(--mono); }
+        .cbar  { height: 3px; background: var(--border); border-radius: 99px; width: 44px; }
+        .cfill { height: 100%; border-radius: 99px; }
+
+ius: 99px; }
         .cfill { height: 100%; border-radius: 99px; }
 
         /* ── BUTTONS ─────────────────────────────────── */
@@ -323,6 +354,296 @@
             .topbar { padding: 12px 16px; }
             .tabbar { padding: 0 16px; }
         }
+
+        /* ── SCALING TAB ─────────────────────────────── */
+        @keyframes sc-fadein  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+        @keyframes sc-glow-a  { 0%,100%{box-shadow:0 0 10px rgba(77,217,160,.15)}  50%{box-shadow:0 0 22px rgba(77,217,160,.35)} }
+        @keyframes sc-glow-b  { 0%,100%{box-shadow:0 0 10px rgba(106,172,255,.15)} 50%{box-shadow:0 0 22px rgba(106,172,255,.35)} }
+        @keyframes sc-glow-c  { 0%,100%{box-shadow:0 0 10px rgba(251,191,106,.15)} 50%{box-shadow:0 0 22px rgba(251,191,106,.35)} }
+        @keyframes sc-glow-d  { 0%,100%{box-shadow:0 0 10px rgba(196,164,255,.15)} 50%{box-shadow:0 0 22px rgba(196,164,255,.35)} }
+
+        .sc-btn-row {
+            display:grid; grid-template-columns:repeat(4,1fr);
+            gap:12px; margin-bottom:20px;
+        }
+        @media(max-width:700px){ .sc-btn-row { grid-template-columns:repeat(2,1fr); } }
+
+        .sc-btn {
+            display:flex; align-items:center; gap:12px;
+            padding:14px 16px; border-radius:var(--radius);
+            cursor:pointer; border:1px solid var(--border);
+            background:var(--surface); font-family:var(--sans);
+            transition:border-color .2s, background .2s;
+            position:relative; overflow:hidden; text-align:left;
+        }
+        .sc-btn::after {
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,.03));
+            pointer-events:none;
+        }
+        .sc-btn:hover { border-color:var(--border-hi); background:var(--surface2); }
+
+        .sc-btn-letter {
+            font-family:var(--mono); font-size:1.5rem; font-weight:300;
+            line-height:1; min-width:28px; color:var(--text-dim);
+            transition:color .2s;
+        }
+        .sc-btn-info { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+        .sc-btn-name { font-size:.72rem; font-weight:600; color:var(--text); letter-spacing:.02em; }
+        .sc-btn-sub  { font-size:.58rem; color:var(--text-dim); font-family:var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .sc-btn-tag  {
+            font-size:.5rem; letter-spacing:.07em; text-transform:uppercase;
+            padding:.15rem .4rem; border-radius:3px; white-space:nowrap; align-self:flex-start;
+        }
+        .tag-live { background:rgba(77,217,160,.12); color:var(--green); border:1px solid rgba(77,217,160,.25); }
+        .tag-proj { background:rgba(196,164,255,.1);  color:var(--purple); border:1px solid rgba(196,164,255,.2); }
+
+        .sc-btn.active-a { border-color:var(--green);  background:rgba(77,217,160,.07);  animation:sc-glow-a 2.5s infinite; }
+        .sc-btn.active-b { border-color:var(--blue);   background:rgba(106,172,255,.07); animation:sc-glow-b 2.5s infinite; }
+        .sc-btn.active-c { border-color:var(--amber);  background:rgba(251,191,106,.07); animation:sc-glow-c 2.5s infinite; }
+        .sc-btn.active-d { border-color:var(--purple); background:rgba(196,164,255,.07); animation:sc-glow-d 2.5s infinite; }
+        .sc-btn.active-a .sc-btn-letter { color:var(--green); }
+        .sc-btn.active-b .sc-btn-letter { color:var(--blue); }
+        .sc-btn.active-c .sc-btn-letter { color:var(--amber); }
+        .sc-btn.active-d .sc-btn-letter { color:var(--purple); }
+
+        /* info strip */
+        .sc-strip {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+            gap:10px; margin-bottom:16px; animation: sc-fadein .3s ease;
+        }
+        .sc-stat {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:14px 16px;
+        }
+        .sc-stat-l { font-size:.56rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
+        .sc-stat-v { font-size:1.7rem; font-family:var(--mono); font-weight:300; line-height:1.1; }
+        .sc-stat-s { font-size:.58rem; color:var(--text-dim); margin-top:3px; }
+
+        /* canvas wrap */
+        @keyframes sc-stat-in {
+          from { opacity:0; transform:translateY(8px); }
+          to   { opacity:1; transform:none; }
+        }
+        .sc-stat { animation: sc-stat-in .35s ease both; }
+        .sc-stat:nth-child(1){ animation-delay:.00s }
+        .sc-stat:nth-child(2){ animation-delay:.05s }
+        .sc-stat:nth-child(3){ animation-delay:.10s }
+        .sc-stat:nth-child(4){ animation-delay:.15s }
+        .sc-stat:nth-child(5){ animation-delay:.20s }
+        .sc-stat:nth-child(6){ animation-delay:.25s }
+
+        .sc-canvas-wrap {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); margin-bottom:16px; overflow:hidden;
+        }
+        .sc-canvas-header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:10px 16px; border-bottom:1px solid var(--border);
+            background:rgba(0,0,0,.2);
+        }
+        .sc-canvas-title { font-size:.65rem; letter-spacing:.09em; text-transform:uppercase; color:var(--text-hi); font-weight:500; }
+        .sc-canvas-hint  { font-size:.58rem; color:var(--green); letter-spacing:.06em; }
+        .sc-canvas-wrap canvas { display:block; width:100% !important; }
+
+        /* notes */
+        .sc-notes {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:18px 20px;
+            font-size:.7rem; line-height:1.9; color:var(--text);
+            animation: sc-fadein .35s ease;
+        }
+        .sc-notes strong { color:var(--text-hi); }
+        .sc-notes code { color:var(--cyan); font-family:var(--mono); font-size:.68rem; }
+        .sc-note-head {
+            font-size:.6rem; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--text-dim); margin-bottom:12px; padding-bottom:8px;
+            border-bottom:1px solid var(--border);
+        }
+        .sc-tag-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+        .sc-tag {
+            font-size:.58rem; padding:.2rem .55rem; border-radius:3px;
+            border:1px solid var(--border); color:var(--text-dim); font-family:var(--mono);
+        }
+        .sc-tag.g { border-color:rgba(77,217,160,.3);  color:var(--green); }
+        .sc-tag.b { border-color:rgba(106,172,255,.3); color:var(--blue); }
+        .sc-tag.a { border-color:rgba(251,191,106,.3); color:var(--amber); }
+        .sc-tag.p { border-color:rgba(196,164,255,.3); color:var(--purple); }
+        .sc-tag.r { border-color:rgba(255,123,138,.3); color:var(--red); }
+
+        /* ── ATTACKER ANALYSIS TAB ───────────────────── */
+        .rpt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px; }
+        .rpt-card {
+            background:var(--surface2); border:1px solid var(--border);
+            border-radius:var(--radius); overflow:hidden;
+            border-left:3px solid var(--text-dim);
+            transition:border-color .15s;
+        }
+        .rpt-card.critical { border-left-color:var(--red); }
+        .rpt-card.high     { border-left-color:var(--amber); }
+        .rpt-card.medium   { border-left-color:var(--blue); }
+        .rpt-card.low      { border-left-color:var(--green); }
+        .rpt-card.unknown  { border-left-color:var(--text-dim); }
+        .rpt-head {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:10px 14px; border-bottom:1px solid var(--border);
+            background:rgba(0,0,0,.15);
+        }
+        .rpt-body { padding:14px; display:flex; flex-direction:column; gap:9px; }
+        .rpt-row  { display:flex; gap:10px; align-items:flex-start; }
+        .rpt-key  { font-size:.58rem; letter-spacing:.07em; text-transform:uppercase;
+                    color:var(--text-dim); min-width:110px; padding-top:2px; flex-shrink:0; }
+        .rpt-val  { font-size:.68rem; color:var(--text-hi); flex:1; line-height:1.6; }
+        .rpt-tags { display:flex; flex-wrap:wrap; gap:5px; }
+        .rpt-tag  { font-size:.58rem; padding:.18rem .5rem;
+                    border:1px solid var(--border-hi); color:var(--text);
+                    border-radius:3px; font-family:var(--mono); }
+        .rpt-bar  { height:3px; background:var(--border); border-radius:99px; margin-top:6px; }
+        .rpt-fill { height:100%; border-radius:99px; }
+        .rpt-proto { font-size:.6rem; letter-spacing:.08em; text-transform:uppercase;
+                     padding:.2rem .55rem; border-radius:4px; font-weight:500; }
+        .rpt-proto.ssh  { background:rgba(196,164,255,.12); color:var(--purple); border:1px solid rgba(196,164,255,.2); }
+        .rpt-proto.http { background:rgba(106,172,255,.12); color:var(--blue);   border:1px solid rgba(106,172,255,.2); }
+        .rpt-cmd-list { display:flex; flex-direction:column; gap:3px; }
+        .rpt-cmd { font-family:var(--mono); font-size:.62rem; color:var(--cyan);
+                   background:rgba(0,0,0,.3); padding:3px 8px; border-radius:3px; }
+        .rpt-analyse-btn {
+            display:inline-flex; align-items:center; gap:7px;
+            font-size:.65rem; letter-spacing:.06em; text-transform:uppercase;
+            padding:.55rem 1.1rem; border:1px solid var(--border-hi);
+            color:var(--text); background:transparent; cursor:pointer;
+            border-radius:var(--radius-sm); transition:all .15s; font-family:var(--sans);
+        }
+        .rpt-analyse-btn:hover { border-color:var(--purple); color:var(--purple); background:var(--purple-soft); }
+        .rpt-analyse-btn.running { border-color:var(--amber); color:var(--amber); pointer-events:none; }
+        .rpt-spinner { display:inline-block; width:10px; height:10px; border:1.5px solid currentColor;
+                       border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .rpt-empty { padding:50px 20px; text-align:center; color:var(--text-dim); font-size:.68rem; }
+
+        /* ── Per-session progress bar ────────────────── */
+        .sess-progress {
+            display: none;
+            padding: 12px 16px;
+            background: rgba(0,0,0,.3);
+            border-top: 2px solid rgba(196,164,255,.3);
+            flex-direction: column; gap: 8px;
+            animation: prog-fadein .2s ease;
+        }
+        @keyframes prog-fadein { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+        .sess-progress.active { display: flex !important; }
+        .prog-bar-wrap {
+            height: 4px; background: var(--border);
+            border-radius: 99px; overflow: hidden;
+        }
+        .prog-bar-fill {
+            height: 100%; border-radius: 99px;
+            background: var(--purple);
+            transition: width .4s ease;
+            width: 0%;
+        }
+        .prog-steps {
+            display: flex; gap: 6px; align-items: center;
+            font-size: .6rem; color: var(--text-dim); font-family: var(--mono);
+        }
+        .prog-step {
+            display: flex; align-items: center; gap: 4px;
+            padding: .15rem .5rem; border-radius: 3px;
+            border: 1px solid transparent; font-size: .58rem;
+        }
+        .prog-step.done    { color: var(--green);  border-color: rgba(77,217,160,.2);  background: rgba(77,217,160,.06); }
+        .prog-step.active  { color: var(--amber);  border-color: rgba(251,191,106,.2); background: rgba(251,191,106,.06); }
+        .prog-step.pending { color: var(--text-dim); }
+        .prog-step.error   { color: var(--red);    border-color: rgba(255,123,138,.2); background: rgba(255,123,138,.06); }
+        .prog-msg { font-size: .62rem; color: var(--text-dim); font-family: var(--mono); }
+
+        /* ── Inline report panel ─────────────────────── */
+        .inline-report {
+            border-top: 2px solid var(--border);
+        }
+        .inline-report-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,.18);
+            flex-shrink: 0;
+        }
+        .inline-report-body {
+            padding: 20px 24px;
+            font-size: .72rem;
+            line-height: 1.8;
+            color: var(--text);
+            overflow-x: auto;
+        }
+        .inline-report-body h1 {
+            font-size: 1rem; font-weight: 600;
+            color: var(--text-hi); border-bottom: 1px solid var(--border);
+            padding-bottom: 8px; margin: 0 0 16px;
+        }
+        .inline-report-body h2 {
+            font-size: .78rem; font-weight: 600; letter-spacing: .04em;
+            text-transform: uppercase; color: var(--blue);
+            margin: 20px 0 8px;
+        }
+        .inline-report-body h3 {
+            font-size: .72rem; font-weight: 500; color: var(--text-hi);
+            margin: 14px 0 6px;
+        }
+        .inline-report-body table {
+            width: 100%; border-collapse: collapse; margin: 8px 0 14px;
+            font-size: .68rem;
+        }
+        .inline-report-body th {
+            text-align: left; padding: 6px 10px;
+            background: rgba(0,0,0,.2); color: var(--text-dim);
+            font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+        .inline-report-body td {
+            padding: 6px 10px; border-bottom: 1px solid rgba(100,140,200,.08);
+            color: var(--text);
+        }
+        .inline-report-body code {
+            font-family: var(--mono); font-size: .65rem;
+            background: rgba(0,0,0,.25); padding: 1px 5px; border-radius: 3px;
+            color: var(--cyan);
+        }
+        .inline-report-body blockquote {
+            border-left: 3px solid var(--red);
+            margin: 10px 0; padding: 8px 14px;
+            background: rgba(255,123,138,.06);
+            color: var(--text); border-radius: 0 4px 4px 0;
+        }
+        .inline-report-body ul { padding-left: 18px; margin: 6px 0; }
+        .inline-report-body li { margin: 3px 0; }
+        .inline-report-body hr {
+            border: none; border-top: 1px solid var(--border); margin: 16px 0;
+        }
+        .inline-report-body strong { color: var(--text-hi); }
+
+        /* Report modal */
+        #report-modal-body .rpt-divider { color: var(--border-hi); }
+        #report-modal-body .rpt-head    { color: var(--blue); font-weight: 600; }
+        #report-modal-body .rpt-critical{ color: var(--red); }
+        #report-modal-body .rpt-high    { color: var(--amber); }
+        #report-modal-body .rpt-medium  { color: var(--blue); }
+        #report-modal-body .rpt-low     { color: var(--green); }
+
+        /* Report modal rendered content */
+        #report-modal-body h1 { font-size:.9rem; font-weight:600; color:var(--text-hi); border-bottom:1px solid var(--border); padding-bottom:8px; margin:0 0 16px; }
+        #report-modal-body h2 { font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--blue); margin:20px 0 8px; }
+        #report-modal-body h3 { font-size:.68rem; font-weight:500; color:var(--text-hi); margin:14px 0 6px; }
+        #report-modal-body table { width:100%; border-collapse:collapse; font-size:.65rem; margin:8px 0 14px; }
+        #report-modal-body td { padding:6px 10px; border:1px solid var(--border); vertical-align:top; color:var(--text); }
+        #report-modal-body tr:first-child td { background:rgba(0,0,0,.15); color:var(--text-hi); font-weight:500; }
+        #report-modal-body ul { margin:6px 0 10px; padding-left:18px; }
+        #report-modal-body li { font-size:.67rem; color:var(--text); margin:3px 0; line-height:1.7; }
+        #report-modal-body p  { font-size:.67rem; color:var(--text); margin:4px 0; line-height:1.7; }
+        #report-modal-body code { font-family:var(--mono); font-size:.62rem; background:rgba(0,0,0,.25); padding:1px 5px; border-radius:3px; color:var(--cyan); }
+        #report-modal-body strong { color:var(--text-hi); }
+        #report-modal-body em { color:var(--text-dim); font-style:normal; font-size:.62rem; }
+        #report-modal-body hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
+        #report-modal-body br { display:block; margin:4px 0; content:""; }
     </style>
 </head>
 <body>
@@ -347,6 +668,7 @@
     <button class="tb"        onclick="showTab('loadbalancer',this)">⇄&nbsp; Load Balancer</button>
     <button class="tb"        onclick="showTab('gateway',this)">⇢&nbsp; Gateway Decisions</button>
     <button class="tb"        onclick="showTab('aianalysis',this)">✦&nbsp; AI Analysis</button>
+    <button class="tb"        onclick="showTab('scaling',this)">⊞&nbsp; Scaling</button>
 </div>
 
 <div class="container">
@@ -480,35 +802,161 @@
 <div id="aianalysis" class="tc">
 
     <div class="srow">
-        <div class="sc"><div class="sl">Analysis Source</div><div class="sv cp" style="font-size:.88rem;padding-top:9px">Honeypot LLM</div><div class="ss">llama3</div></div>
+        <div class="sc"><div class="sl">Analysis Source</div><div class="sv cp" style="font-size:.88rem;padding-top:9px">Honeypot LLM</div><div class="ss">llama3:8b</div></div>
         <div class="sc"><div class="sl">Critical</div><div class="sv cr" id="ai-crit">0</div><div class="ss">threat level</div></div>
         <div class="sc"><div class="sl">High</div><div class="sv ca" id="ai-high">0</div><div class="ss">threat level</div></div>
         <div class="sc"><div class="sl">Medium / Low</div><div class="sv cb" id="ai-ml">0</div><div class="ss">threat level</div></div>
         <div class="sc"><div class="sl">Total Analysed</div><div class="sv cg" id="ai-total">0</div><div class="ss">honeypot events</div></div>
     </div>
-    
 
-    <div class="card">
-        <div class="ch"><div class="ct">✦ Honeypot LLM Analysis Records</div><button class="btn btnb" onclick="refreshAI()">↺ Refresh</button></div>
-        <div class="cb-pad">
-            <div class="frow">
-                <span class="flbl">Filter:</span>
-                <button class="fbtn active" onclick="filterAI('all',this)">All</button>
-                <button class="fbtn" onclick="filterAI('critical',this)">Critical</button>
-                <button class="fbtn" onclick="filterAI('high',this)">High</button>
-                <button class="fbtn" onclick="filterAI('medium',this)">Medium</button>
-                <button class="fbtn" onclick="filterAI('low',this)">Low</button>
-            </div>
-            <div class="agrid" id="agrid">
-                <div class="empty" style="grid-column:1/-1">
-                    No analysis records yet. Suspicious traffic arriving at the honeypot will appear here.
+    <!-- Quiet header bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:.62rem;color:var(--text-dim)">
+            Click <strong style="color:var(--text-hi)">View Report</strong> on any row — analysis runs automatically if needed.
+            Source: <code style="color:var(--cyan);font-family:var(--mono)">logs/beelzebub/beelzebub.log</code> → Llama3:8b
+        </div>
+        <button class="btn btnb" onclick="refreshAI()" style="flex-shrink:0">↺ Refresh</button>
+    </div>
+
+    <!-- Filter row -->
+    <div class="frow">
+        <span class="flbl">Filter:</span>
+        <button class="fbtn active" onclick="filterAI('all',this)">All</button>
+        <button class="fbtn" onclick="filterAI('critical',this)">Critical</button>
+        <button class="fbtn" onclick="filterAI('high',this)">High</button>
+        <button class="fbtn" onclick="filterAI('medium',this)">Medium</button>
+        <button class="fbtn" onclick="filterAI('low',this)">Low</button>
+        <span style="margin-left:auto;font-size:.58rem;color:var(--text-dim)" id="ai-source-label"></span>
+    </div>
+
+    <!-- Row-based session list -->
+    <div id="agrid">
+        <div class="empty">No sessions yet. Run the attack simulator, then click View Report on any row.</div>
+    </div>
+
+    <!-- Report preview modal -->
+    <div id="rpt-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.72);backdrop-filter:blur(4px)" onclick="closeModal(event)">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(720px,94vw);max-height:82vh;
+                    background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--radius);
+                    display:flex;flex-direction:column;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;
+                        border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);flex-shrink:0">
+                <span style="font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--text-hi);font-weight:500" id="modal-title">Session Report</span>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btnb" onclick="downloadInlineReport(this)" style="font-size:.58rem">⬇ Download JSON</button>
+                    <button class="btn" onclick="document.getElementById('rpt-modal').style.display='none'" style="font-size:.58rem">✕ Close</button>
                 </div>
+            </div>
+            <div id="modal-body" style="overflow-y:auto;padding:18px;font-size:.68rem;line-height:1.8;color:var(--text)"></div>
+        </div>
+    </div>
+
+</div>
+<!-- ══════════ TAB: SCALING ══════════ -->
+<div id="scaling" class="tc">
+
+    <!-- Scenario Buttons -->
+    <div class="sc-btn-row" id="sc-btn-row">
+        <button class="sc-btn" id="sc-btn-A" onclick="setScenario('A')">
+            <span class="sc-btn-letter">A</span>
+            <span class="sc-btn-info">
+                <span class="sc-btn-name">Scenario A</span>
+                <span class="sc-btn-sub">3 devices · no gateway</span>
+            </span>
+            <span class="sc-btn-tag tag-live">Deployed</span>
+        </button>
+        <button class="sc-btn" id="sc-btn-B" onclick="setScenario('B')">
+            <span class="sc-btn-letter">B</span>
+            <span class="sc-btn-info">
+                <span class="sc-btn-name">Scenario B</span>
+                <span class="sc-btn-sub">7 devices · nginx + gateway</span>
+            </span>
+            <span class="sc-btn-tag tag-live">● Live</span>
+        </button>
+        <button class="sc-btn" id="sc-btn-C" onclick="setScenario('C')">
+            <span class="sc-btn-letter">C</span>
+            <span class="sc-btn-info">
+                <span class="sc-btn-name">Scenario C</span>
+                <span class="sc-btn-sub">~30 devices · multi-cluster</span>
+            </span>
+            <span class="sc-btn-tag tag-proj">Projected</span>
+        </button>
+        <button class="sc-btn" id="sc-btn-D" onclick="setScenario('D')">
+            <span class="sc-btn-letter">D</span>
+            <span class="sc-btn-info">
+                <span class="sc-btn-name">Scenario D</span>
+                <span class="sc-btn-sub">100+ devices · full scale</span>
+            </span>
+            <span class="sc-btn-tag tag-proj">Projected</span>
+        </button>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="sc-strip" id="sc-strip"></div>
+
+    <!-- Animated canvas topology -->
+    <div class="sc-canvas-wrap" id="sc-canvas-wrap">
+        <div class="sc-canvas-header">
+            <span class="sc-canvas-title" id="sc-canvas-title">Network Topology</span>
+            <span class="sc-canvas-hint">● live traffic simulation</span>
+        </div>
+        <canvas id="sc-canvas"></canvas>
+    </div>
+
+    <!-- Notes -->
+    <div class="sc-notes" id="sc-notes"></div>
+
+    <!-- Scaling impact graph -->
+    <div class="sc-canvas-wrap" style="margin-top:16px">
+        <div class="sc-canvas-header">
+            <span class="sc-canvas-title">Scaling Impact — Devices vs Protection Coverage</span>
+            <span class="sc-canvas-hint">projected values</span>
+        </div>
+        <div style="padding:20px 20px 12px">
+            <canvas id="sc-chart" height="160"></canvas>
+        </div>
+    </div>
+
+</div>
+
+    <div class="card" style="margin-bottom:16px">
+        <div class="ch">
+            <div class="ct">🔬 Honeypot Session Analysis</div>
+            <div style="display:flex;gap:8px;align-items:center">
+                
+                <button class="btn btnb" onclick="refreshAI()">↺ Refresh</button>
+            </div>
+        </div>
+        <div class="cb-pad" style="padding-bottom:8px">
+            <div style="font-size:.62rem;color:var(--text-dim);line-height:1.7">
+                Reads <code style="color:var(--cyan);font-family:var(--mono)">logs/beelzebub/beelzebub.log</code>,
+                groups events into sessions, sends each to <strong style="color:var(--text-hi)">Llama3:8b</strong> for threat analysis.
+                SSH sessions include full command transcripts. HTTP sessions include attack paths and payloads.
+                Analysis may take 1–3 minutes depending on session count.
             </div>
         </div>
     </div>
+
+    <div id="rpt-status" style="display:none" class="card">
+        <div class="cb-pad" style="text-align:center;padding:20px">
+            <div class="rpt-spinner" style="width:18px;height:18px;margin:0 auto 10px"></div>
+            <div style="font-size:.7rem;color:var(--amber)" id="rpt-status-text">Running analysis... this may take a few minutes</div>
+        </div>
+    </div>
+
+    <div class="rpt-grid" id="rpt-grid">
+        <div class="empty">No sessions yet — click View Report on any row to trigger analysis.</div>
+    </div>
+
 </div>
+
+
 <script>
 // ── TAB SWITCHING ──────────────────────────────────────────
+// hoisted — needed by showTab before scaling JS loads
+let currentSC    = null;
+let chartInited  = false;
+
 function showTab(id, btn) {
     document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tb').forEach(b => b.classList.remove('active'));
@@ -517,6 +965,7 @@ function showTab(id, btn) {
     if (id === 'gateway')      refreshGW();
     if (id === 'aianalysis')   refreshAI();
     if (id === 'loadbalancer') refreshLB();
+    if (id === 'scaling')      { if(!currentSC) setScenario('B'); if(!chartInited){initScalingChart();chartInited=true;} }
 }
 
 // ── GATEWAY LOG ────────────────────────────────────────────
@@ -595,40 +1044,113 @@ const threatColor = lvl => ({critical:'var(--red)',high:'var(--amber)',medium:'v
 const confColor   = c   => c>=80?'var(--red)':c>=60?'var(--amber)':c>=40?'var(--blue)':'var(--text-dim)';
 const badgeClass  = lvl => ({critical:'br',high:'ba',medium:'bb',low:'bg'}[lvl]||'');
 
-function renderAI(records) {
+// Shared report data store
+let reportSessions = [];
+
+// ── Unified renderAI — merges ai_analysis.log + honeypot_report.json ──────
+function renderAI(aiRecs) {
     const grid  = document.getElementById('agrid');
-    const shown = aiFilter === 'all' ? records : records.filter(r => r.analysis?.threat_level === aiFilter);
+    const rows  = [];
+
+    // Build a lookup of req_ids that already have a deep report
+    // so we can mark those rows as already analysed
+    const reportedIds = new Set(
+        reportSessions.map(r => String(r.record?.req_id || r.session?.session_id || ''))
+    );
+
+    // Always show ALL ai_analysis.log records — one row per record
+    aiRecs.forEach((rec, idx) => {
+        const a   = rec.analysis || {};
+        const rid = String(rec.req_id || '');
+        // If this record already has a deep report, flag it
+        const hasReport = reportedIds.has(rid);
+        const repItem   = hasReport
+            ? reportSessions.find(r => String(r.record?.req_id || '') === rid)
+            : null;
+        // Use deep analysis values if available, else gateway values
+        const deepA = repItem?.analysis || {};
+        rows.push({
+            _type:     hasReport ? 'report' : 'ai',
+            _idx:      idx,
+            _rid:      rid,
+            _sid:      '',
+            _item:     rec,
+            _repItem:  repItem,
+            lvl:       deepA.threat_level || a.threat_level || 'unknown',
+            proto:     'HTTP',
+            src:       rec.src_ip || '—',
+            time:      (rec.timestamp||'').split('.')[0],
+            attack:    deepA.attack_type || deepA.attack_hypothesis || a.attack_hypothesis || '—',
+            intent:    deepA.attacker_intent || a.benign_baseline_comparison || '—',
+            conf:      deepA.confidence || a.confidence || 0,
+            tags:      deepA.why_suspicious || a.why_suspicious || [],
+            action:    deepA.recommended_action || a.recommended_action || '—',
+            extra:     'req ' + (rid || '—'),
+            hasReport: hasReport,
+        });
+    });
+
+    const shown = aiFilter === 'all' ? rows : rows.filter(r => r.lvl === aiFilter);
+
     if (!shown.length) {
-        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No records match filter.</div>`;
+        grid.innerHTML = `<div class="empty">No records match filter.</div>`;
         return;
     }
-    grid.innerHTML = [...shown].reverse().map(rec => {
-        const a    = rec.analysis || {};
-        const lvl  = a.threat_level || 'unknown';
-        const conf = a.confidence || 0;
-        const whys = (a.why_suspicious||[]).map(w=>`<span class="itag">${w}</span>`).join('');
-        return `
-        <div class="acard ${lvl}">
-            <div class="ahead">
-                <span class="badge ${badgeClass(lvl)}">${lvl}</span>
-                <span class="atime">${(rec.timestamp||'').split('.')[0]}</span>
-            </div>
-            <div class="abody">
-                <div class="arow"><span class="akey">Req ID</span><span class="aval" style="font-family:var(--mono)">${rec.req_id||'—'}</span></div>
-                <div class="arow"><span class="akey">Source IP</span><span class="aval" style="font-family:var(--mono)">${rec.src_ip||'—'}</span></div>
-                <div class="arow"><span class="akey">Attack Hypothesis</span><span class="aval" style="color:var(--amber)">${a.attack_hypothesis||'—'}</span></div>
-                <div class="arow"><span class="akey">Why Suspicious</span><div class="itags">${whys||'<span style="color:var(--text-dim);font-size:.6rem">no indicators</span>'}</div></div>
-                <div class="arow"><span class="akey">vs Benign Baseline</span><span class="aval" style="font-size:.65rem">${a.benign_baseline_comparison||'—'}</span></div>
-                <div class="arow"><span class="akey">Recommendation</span><span class="aval">${a.recommended_action||'—'}</span></div>
-                <div class="arow" style="align-items:center">
-                    <span class="akey">Confidence</span>
-                    <div style="flex:1">
-                        <div style="font-family:var(--mono);font-size:.68rem;color:${confColor(conf)};margin-bottom:5px">${conf}%</div>
-                        <div class="cbar"><div class="cfill" style="width:${conf}%;background:${confColor(conf)}"></div></div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
+
+    const lvlCol = l => ({critical:'var(--red)',high:'var(--amber)',medium:'var(--blue)',low:'var(--green)'}[l]||'var(--text-dim)');
+    const badgeCls3 = l => ({critical:'br',high:'ba',medium:'bb',low:'bg'}[l]||'');
+    const confCol2  = v => v>=80?'var(--red)':v>=60?'var(--amber)':v>=40?'var(--blue)':'var(--green)';
+
+    grid.innerHTML = shown.map(r => {
+        const lvlCol2  = {'critical':'var(--red)','high':'var(--amber)','medium':'var(--blue)','low':'var(--green)'};
+        const badgeMap = {'critical':'br','high':'ba','medium':'bb','low':'bg'};
+        const col  = lvlCol2[r.lvl] || 'var(--text-dim)';
+        const bdg  = badgeMap[r.lvl] || '';
+        const tags = r.tags.slice(0,3).map(t => '<span class="itag">'+t+'</span>').join(' ');
+        const rid  = r._item ? (r._item.req_id || r._item.session?.session_id || '') : '';
+
+        let html = '<div class="acard ' + r.lvl + '">';
+        html += '<div class="acard-row">';
+
+        // Left: threat level
+        html += '<div class="acard-lvl">';
+        html += '<span class="badge ' + bdg + '" style="font-size:.52rem">' + r.lvl + '</span>';
+        html += '<span class="rpt-proto ' + r.proto.toLowerCase() + '" style="font-size:.52rem">' + r.proto + '</span>';
+        html += '<span style="font-family:var(--mono);font-size:.62rem;color:' + col + '">' + r.conf + '%</span>';
+        html += '<div class="cbar"><div class="cfill" style="width:' + r.conf + '%;background:' + col + '"></div></div>';
+        html += '</div>';
+
+        // Middle: data columns
+        html += '<div class="acard-main">';
+        html += '<div class="acard-col"><span class="akey">Source IP</span><span class="aval" style="font-family:var(--mono);font-size:.63rem">' + r.src + '</span><span class="akey" style="margin-top:4px">Req ID</span><span class="aval muted" style="font-size:.58rem;font-family:var(--mono)">' + rid + '</span></div>';
+        html += '<div class="acard-col"><span class="akey">Attack Type</span><span class="aval" style="color:var(--amber)">' + r.attack + '</span><span class="akey" style="margin-top:4px">Intent</span><span class="aval muted" style="font-size:.61rem">' + (r.intent||'').slice(0,85) + '</span></div>';
+        html += '<div class="acard-col"><span class="akey">Indicators</span><div class="itags">' + (tags||'<span style="color:var(--text-dim);font-size:.58rem">—</span>') + '</div><span class="akey" style="margin-top:4px">Action</span><span class="aval muted" style="font-size:.6rem">' + (r.action||'').slice(0,75) + '</span></div>';
+        html += '<div class="acard-col"><span class="akey">Time</span><span class="aval" style="font-family:var(--mono);font-size:.58rem">' + r.time.slice(0,16) + '</span></div>';
+        html += '</div>';
+
+        // Right: View Report button
+        html += '<div class="acard-action">';
+        const btnLabel = r.hasReport ? '&#x2705; Report Ready' : '&#x1F4C4; View Report';
+        const btnStyle = r.hasReport ? 'border-color:rgba(77,217,160,.4);color:var(--green);background:rgba(77,217,160,.08)' : '';
+        html += '<button class="view-report-btn" style="' + btnStyle + '" data-rid="' + rid + '" data-type="' + r._type + '" data-idx="' + r._idx + '" data-has-report="' + (r.hasReport?'1':'0') + '" onclick="handleViewReport(this)">'+btnLabel+'</button>';
+        html += '</div>';
+        html += '</div>';
+
+        // Progress bar (hidden until analysis runs)
+        html += '<div class="sess-progress" id="prog-' + r._idx + '">';
+        html += '<div class="prog-steps" id="prog-steps-' + r._idx + '">';
+        html += '<span class="prog-step pending" data-step="extract">&#x1F50D; Extracting</span> ';
+        html += '<span style="color:var(--border)">&#8250;</span> ';
+        html += '<span class="prog-step pending" data-step="ollama">&#x1F916; Llama3</span> ';
+        html += '<span style="color:var(--border)">&#8250;</span> ';
+        html += '<span class="prog-step pending" data-step="done">&#x2713; Done</span>';
+        html += '</div>';
+        html += '<div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill-' + r._idx + '"></div></div>';
+        html += '<div class="prog-msg" id="prog-msg-' + r._idx + '">Ready</div>';
+        html += '</div>';
+
+        html += '</div>';
+        return html;
     }).join('');
 }
 
@@ -641,33 +1163,597 @@ function filterAI(level, btn) {
 
 async function refreshAI() {
     try {
-        const d = await fetch('/ai_analysis').then(r => r.json());
-        aiRecords = d.records || [];
-        document.getElementById('ai-total').textContent = aiRecords.length;
-        document.getElementById('ai-crit').textContent  = aiRecords.filter(r=>r.analysis?.threat_level==='critical').length;
-        document.getElementById('ai-high').textContent  = aiRecords.filter(r=>r.analysis?.threat_level==='high').length;
-        document.getElementById('ai-ml').textContent    = aiRecords.filter(r=>['medium','low'].includes(r.analysis?.threat_level)).length;
+        // Fetch both sources in parallel
+        const [aiData, rptData] = await Promise.all([
+            fetch('/ai_analysis').then(r=>r.json()).catch(()=>({records:[]})),
+            fetch('/honeypot/report').then(r=>r.json()).catch(()=>({sessions:[]})),
+        ]);
+        aiRecords      = aiData.records  || [];
+        reportSessions = rptData.sessions || [];
+
+        const allRecs = reportSessions.length ? reportSessions : aiRecords;
+        const totalN  = allRecs.length;
+        document.getElementById('ai-total').textContent = totalN;
+        document.getElementById('ai-crit').textContent  = allRecs.filter(r=>(r.analysis?.threat_level||r.analysis?.threat_level)==='critical').length;
+        document.getElementById('ai-high').textContent  = allRecs.filter(r=>(r.analysis?.threat_level)==='high').length;
+        document.getElementById('ai-ml').textContent    = allRecs.filter(r=>['medium','low'].includes(r.analysis?.threat_level)).length;
+
+        const lbl = document.getElementById('ai-source-label');
+        if (lbl) lbl.textContent = reportSessions.length
+            ? `${reportSessions.length} session${reportSessions.length>1?'s':''} from honeypot report`
+            : `${aiRecords.length} records from gateway log`;
+
         renderAI(aiRecords);
     } catch(e) {
-        document.getElementById('agrid').innerHTML = `
-            <div class="empty" style="grid-column:1/-1;color:var(--red)">
-                Error loading analysis: ${e.message}<br>
-                <span style="font-size:.62rem;color:var(--text-dim)">
-                    Ensure your server exposes <code>/ai_analysis</code>
-                    returning <code>{"records":[...]}</code> from logs/ai_analysis.log
-                </span>
-            </div>`;
+        document.getElementById('agrid').innerHTML =
+            `<div class="empty" style="color:var(--red)">Error: ${e.message}</div>`;
     }
 }
- 
-// ── AUTO REFRESH ───────────────────────────────────────────
-setInterval(() => {
-    const active = document.querySelector('.tc.active');
-    if (!active) return;
-    if (active.id === 'gateway')      refreshGW();
-    if (active.id === 'aianalysis')   refreshAI();
-    if (active.id === 'loadbalancer') refreshLB();
-}, 3000);
+
+// ── Modal — view full session report ────────────────────────
+async function handleViewReport(btn) {
+    const type = btn.dataset.type;
+    const idx  = +btn.dataset.idx;
+    const rid  = btn.dataset.rid;
+
+    console.log('[ViewReport] type:', type, 'idx:', idx, 'rid:', rid);
+
+    // Already has a report — show inline immediately
+    if (btn.dataset.hasReport === '1') {
+        const rid2 = btn.dataset.rid;
+        const rep  = reportSessions.find(r => String(r.record?.req_id || '') === rid2);
+        if (rep) { showInlineReport(rep, btn.closest('.acard')); return; }
+    }
+
+    if (!rid) { alert('No req_id on this record.'); return; }
+
+    const card    = btn.closest('.acard');
+    const progEl  = card.querySelector('.sess-progress');
+    const fillEl  = card.querySelector('.prog-bar-fill');
+    const msgEl   = card.querySelector('.prog-msg');
+    const stepsEl = card.querySelector('.prog-steps');
+
+    function setStep(step, state) {
+        if (!stepsEl) return;
+        stepsEl.querySelectorAll('.prog-step').forEach(el => {
+            if (el.dataset.step === step) el.className = 'prog-step ' + state;
+        });
+    }
+    function setMsg(msg) { console.log('[Prog]', msg); if (msgEl) msgEl.textContent = msg; }
+    function setFill(pct) { if (fillEl) fillEl.style.width = pct + '%'; }
+    function showProg() { if (progEl) { progEl.style.display = 'flex'; progEl.classList.add('active'); } }
+    function hideProg() { if (progEl) { progEl.classList.remove('active'); progEl.style.display = 'none'; } }
+
+    btn.disabled = true;
+    btn.textContent = 'Analysing...';
+    showProg();
+    setStep('send', 'active');
+    setMsg('Sending req ' + rid + ' to server...');
+    setFill(15);
+
+    // Animate bar while Ollama is running (can take 30-90s)
+    let pct = 15, dots = 0;
+    const timer = setInterval(() => {
+        if (pct < 85) pct += 0.15;
+        setFill(pct);
+        dots = (dots + 1) % 4;
+        setMsg('Llama3:8b analysing' + '.'.repeat(dots) + ' (' + Math.round(pct) + '%)');
+    }, 500);
+
+    console.log('[ViewReport] fetching /honeypot/generate_report/' + rid);
+
+    try {
+        const resp = await fetch('/honeypot/generate_report/' + rid, { method: 'POST' });
+        console.log('[ViewReport] status:', resp.status);
+        clearInterval(timer);
+
+        if (!resp.ok) {
+            const txt = await resp.text();
+            throw new Error('HTTP ' + resp.status + ': ' + txt.slice(0, 200));
+        }
+
+        setStep('send', 'done'); setStep('ollama', 'done'); setStep('save', 'active');
+        setMsg('Parsing response...'); setFill(90);
+
+        // Read as text first so we can log it if JSON parse fails
+        const rawText = await resp.text();
+        console.log('[ViewReport] raw response:', rawText.slice(0, 500));
+
+        let result;
+        try {
+            result = JSON.parse(rawText);
+        } catch(parseErr) {
+            throw new Error('Server returned invalid JSON: ' + rawText.slice(0, 200));
+        }
+
+        if (!result) throw new Error('Server returned null/empty response');
+        console.log('[ViewReport] result keys:', Object.keys(result));
+        if (result.error) throw new Error('Server error: ' + result.error);
+
+        setStep('save', 'done'); setStep('done', 'active');
+        setFill(100); setMsg('Done! Report ready below.');
+        setStep('done', 'done');
+
+        showInlineReport(result, card);
+        // progress stays visible — user closes it by scrolling or refreshing
+
+    } catch(e) {
+        clearInterval(timer);
+        console.error('[ViewReport] error:', e);
+        ['send','ollama','save','done'].forEach(s => setStep(s, 'error'));
+        setMsg('Error: ' + e.message);
+        setFill(0);
+        btn.disabled = false;
+        btn.textContent = 'Retry';
+        return;
+    }
+    btn.disabled = false;
+    btn.textContent = 'View Report';
+}
+
+// ── MD report generator ──────────────────────────────────────
+function buildMarkdown(result) {
+    const a   = result.analysis || {};
+    const rec = result.record || result.session || {};
+    const flow = rec.flow || {};
+    const hp   = rec.honeypot_engagement || {};
+    const now  = new Date().toISOString().slice(0,19).replace('T',' ') + ' UTC';
+
+    const lvl   = (a.threat_level||'unknown').toUpperCase();
+    const conf  = a.confidence || 0;
+    const why   = (a.why_suspicious||[]).map(w => '- ' + w).join('\n') || '- None identified';
+    const tags  = (a.why_suspicious||[]).slice(0,5).join(', ') || '—';
+
+    return [
+        '# Honeypot Threat Report',
+        '',
+        '| Field | Value |',
+        '|-------|-------|',
+        '| **Generated** | ' + now + ' |',
+        '| **Req ID** | `' + (rec.req_id || '—') + '` |',
+        '| **Source IP** | `' + (rec.src_ip || '—') + '` |',
+        '| **Timestamp** | ' + (rec.timestamp || '—') + ' |',
+        '',
+        '---',
+        '',
+        '## Threat Assessment',
+        '',
+        '| Field | Value |',
+        '|-------|-------|',
+        '| **Threat Level** | **' + lvl + '** |',
+        '| **Confidence** | ' + conf + '% |',
+        '| **Attack Type** | ' + (a.attack_type || a.attack_hypothesis || '—') + ' |',
+        '| **Analysis Source** | ' + (a.analysis_source || 'llama3:8b') + ' |',
+        '',
+        '## Attacker Intent',
+        '',
+        (a.attacker_intent || a.benign_baseline_comparison || '—'),
+        '',
+        '## Why Suspicious',
+        '',
+        why,
+        '',
+        '## Baseline Deviation',
+        '',
+        (a.benign_baseline_comparison || '—'),
+        '',
+        '## Recommended Action',
+        '',
+        '> ' + (a.recommended_action || '—'),
+        '',
+        '## Network Flow',
+        '',
+        '| Field | Value |',
+        '|-------|-------|',
+        '| **Src Port** | ' + (flow.src_port || '—') + ' |',
+        '| **Dst Port** | ' + (flow.dst_port || '—') + ' |',
+        '| **Protocol** | ' + (flow.protocol || '—') + ' |',
+        '| **Conn State** | ' + (flow.conn_state || '—') + ' |',
+        '| **Packets** | ' + (flow.packet_count || '—') + ' |',
+        '',
+        '## Honeypot Engagement',
+        '',
+        '| Field | Value |',
+        '|-------|-------|',
+        '| **Source** | ' + (hp.source || '—') + ' |',
+        '| **Status** | ' + (hp.status || '—') + ' |',
+        '| **Format** | ' + (hp.format || '—') + ' |',
+        '',
+        '---',
+        '',
+        '*Report generated by IoT Honeynet Dashboard — llama3:8b*',
+    ].join('\n');
+}
+
+// ── Simple markdown → HTML renderer (tables, headers, bold, code, lists) ─
+function mdToHtml(md) {
+    let h = md
+        // headings
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // blockquote
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // hr
+        .replace(/^---$/gm, '<hr>')
+        // bold
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // inline code
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // list items
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        // blank lines → paragraph breaks
+        .replace(/\n\n/g, '\n<br>\n');
+
+    // Tables
+    h = h.replace(/(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)+)/g, function(table) {
+        const rows = table.trim().split('\n');
+        let out = '<table>';
+        rows.forEach((row, i) => {
+            if (i === 1) return; // skip separator
+            const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1);
+            const tag = i === 0 ? 'th' : 'td';
+            out += '<tr>' + cells.map(cell => '<' + tag + '>' + cell.trim() + '</' + tag + '>').join('') + '</tr>';
+        });
+        return out + '</table>';
+    });
+
+    // Wrap consecutive <li> in <ul>
+    h = h.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
+
+    return h;
+}
+
+function buildMD(result) {
+    const a   = result.analysis || {};
+    const rec = result.record || result.session || {};
+    const ioc = a.ioc || {};
+    const findings = a.key_findings || [];
+    const why      = a.why_suspicious || [];
+
+    const alertId  = a.alert_id || ('IDS-' + String(rec.req_id||'').slice(-6));
+    const lvl      = (a.threat_level || 'UNKNOWN').toUpperCase();
+    const ts       = (rec.timestamp || '').split('.')[0];
+    const conf     = (a.confidence || 0) + '%';
+    const status   = (a.status || 'INVESTIGATING').toUpperCase();
+
+    const hr = '---';
+    const lines = [];
+
+    const push = (...args) => args.forEach(l => lines.push(l));
+
+    push(
+        '# IoT Honeynet — Threat Intelligence Report',
+        '',
+        hr,
+        '',
+        '## Alert Metadata',
+        '',
+        '| Field | Value |',
+        '|---|---|',
+        '| **Alert ID** | `' + alertId + '` |',
+        '| **Severity** | **' + lvl + '** |',
+        '| **Attack Type** | ' + (a.attack_type || '—') + ' |',
+        '| **Confidence** | ' + conf + ' |',
+        '| **Status** | ' + status + ' |',
+        '| **Source IP** | `' + (ioc.src_ip || rec.src_ip || '—') + '` |',
+        '| **Destination Port** | `' + (ioc.dst_port || '—') + '` |',
+        '| **Protocol** | ' + (ioc.protocol || 'TCP') + ' |',
+        '| **Connection State** | `' + (ioc.conn_state || '—') + '` |',
+        '| **Timestamp** | ' + ts + ' |',
+        '',
+        hr,
+        '',
+        '## Executive Summary',
+        '',
+        (a.summary || a.attacker_intent || '_No summary available._'),
+        '',
+        '**Attacker Intent:** ' + (a.attacker_intent || '—'),
+        '',
+        hr,
+        '',
+        '## Key Findings',
+        ''
+    );
+
+    if (findings.length) {
+        findings.forEach(f => push('- ' + f));
+    } else {
+        push('_No key findings recorded._');
+    }
+
+    push(
+        '',
+        hr,
+        '',
+        '## Indicators of Compromise (IoC)',
+        '',
+        '| Indicator | Value |',
+        '|---|---|',
+        '| Source IP | `' + (ioc.src_ip || rec.src_ip || '—') + '` |',
+        '| Source Port | `' + (ioc.src_port || '—') + '` |',
+        '| Destination Port | `' + (ioc.dst_port || '—') + '` |',
+        '| Protocol | ' + (ioc.protocol || 'TCP') + ' |',
+        '| Connection State | `' + (ioc.conn_state || '—') + '` |',
+        '| Packet Count | ' + (ioc.packet_count || '—') + ' |',
+        '',
+        hr,
+        '',
+        '## Technical Analysis',
+        '',
+        '### Attack Classification',
+        '',
+        '**Technique:** ' + (a.attack_hypothesis || a.attack_type || '—'),
+        '',
+        '**Severity Reasoning:** ' + (a.severity_reasoning || '—'),
+        '',
+        '### Suspicious Indicators',
+        ''
+    );
+
+    if (why.length) {
+        why.forEach(w => push('- ' + w));
+    } else {
+        push('_No indicators recorded._');
+    }
+
+    push(
+        '',
+        '### Baseline Deviation',
+        '',
+        (a.benign_baseline_comparison || '—'),
+        '',
+        hr,
+        '',
+        '## Recommended Action',
+        '',
+        (a.recommended_action || '—'),
+        '',
+        hr,
+        '',
+        '_Report generated by IoT Honeynet IDS | Analysis engine: Llama3:8b_',
+        '_Generated: ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC_',
+        '_Alert ID: ' + alertId + '_'
+    );
+
+    return lines.join('\n');
+}
+
+let _md   = '';
+let _rData = null;
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function mdToHtml(md) {
+    const out = [];
+    let inTable = false;
+    let inList  = false;
+
+    const flushTable = () => { if (inTable) { out.push('</table>'); inTable = false; } };
+    const flushList  = () => { if (inList)  { out.push('</ul>');    inList  = false; } };
+
+    md.split("\n").forEach(raw => {
+        const line = raw;  // work on raw so we can detect MD before escaping
+
+        // Horizontal rule
+        if (/^---+$/.test(line.trim())) {
+            flushTable(); flushList();
+            out.push('<hr>'); return;
+        }
+        // Headings
+        if (/^### /.test(line)) { flushTable(); flushList(); out.push('<h3>' + inlineMD(line.slice(4)) + '</h3>'); return; }
+        if (/^## /.test(line))  { flushTable(); flushList(); out.push('<h2>' + inlineMD(line.slice(3)) + '</h2>'); return; }
+        if (/^# /.test(line))   { flushTable(); flushList(); out.push('<h1>' + inlineMD(line.slice(2)) + '</h1>'); return; }
+        // Table separator row — skip entirely
+        if (/^\|[-:\| ]+\|$/.test(line.trim())) return;
+        // Table data row
+        if (/^\|/.test(line) && /\|$/.test(line.trim())) {
+            flushList();
+            if (!inTable) { out.push('<table>'); inTable = true; }
+            const cells = line.trim().slice(1,-1).split('|').map(s => inlineMD(s.trim()));
+            out.push('<tr>' + cells.map(s => '<td>' + s + '</td>').join('') + '</tr>');
+            return;
+        }
+        // List item
+        if (/^- /.test(line)) {
+            flushTable();
+            if (!inList) { out.push('<ul>'); inList = true; }
+            out.push('<li>' + inlineMD(line.slice(2)) + '</li>');
+            return;
+        }
+        // Empty line
+        if (line.trim() === '') {
+            flushTable(); flushList();
+            out.push('<div style="margin:4px 0"></div>');
+            return;
+        }
+        // Paragraph
+        flushTable(); flushList();
+        out.push('<p>' + inlineMD(line) + '</p>');
+    });
+    flushTable(); flushList();
+    return out.join("\n");
+}
+
+function inlineMD(s) {
+    s = escHtml(s);
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    // handle _italic_ but not inside words
+    s = s.replace(/(?<![\w])_([^_]+)_(?![\w])/g, '<em>$1</em>');
+    // &nbsp; pass-through
+    s = s.replace(/&amp;nbsp;/g, '&nbsp;');
+    return s;
+}
+
+function showInlineReport(result, cardEl) {
+    _md    = buildMD(result);
+    _rData = result;
+    openReportTab();
+}
+
+function openReportTab() {
+    if (!_md) return;
+    const a   = (_rData && _rData.analysis) ? _rData.analysis : {};
+    const lvl = (a.threat_level || 'MEDIUM').toUpperCase();
+    const colMap = {CRITICAL:'#c0392b', HIGH:'#d35400', MEDIUM:'#2471a3', LOW:'#1e8449'};
+    const col     = colMap[lvl] || '#2c3e50';
+    const alertId = a.alert_id || 'report';
+    const body    = mdToHtml(_md);
+    const mdEsc   = _md.replace(/\\/g,'\\\\').replace(/`/g,'\\`');
+
+    const html = [
+        '<!DOCTYPE html><html><head><meta charset="utf-8">',
+        '<title>' + alertId + ' — IoT Threat Report</title>',
+        '<style>',
+        ':root{--col:' + col + '}',
+        'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;',
+        '     font-size:13px;line-height:1.85;color:#1e293b;background:#f8fafc;',
+        '     margin:0;padding:0}',
+        '.page{max-width:760px;margin:0 auto;padding:40px 48px;background:#fff;',
+        '      min-height:100vh;box-shadow:0 0 0 1px #e2e8f0}',
+        'h1{font-size:20px;color:var(--col);border-bottom:3px solid var(--col);',
+        '   padding-bottom:10px;margin:0 0 24px}',
+        'h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;',
+        '   color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin:28px 0 12px}',
+        'h3{font-size:13px;font-weight:600;color:#1e293b;margin:18px 0 6px}',
+        'table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0 18px}',
+        'td{padding:7px 12px;border:1px solid #e2e8f0;vertical-align:top}',
+        'tr:first-child td{background:#f1f5f9;font-weight:600;color:#334155}',
+        'tr:nth-child(even) td{background:#fafafa}',
+        'ul{margin:8px 0 14px;padding-left:20px}',
+        'li{margin:4px 0;color:#334155}',
+        'p{margin:4px 0;color:#334155}',
+        'code{font-family:"SF Mono",Menlo,monospace;font-size:11px;',
+        '     background:#f1f5f9;padding:1px 5px;border-radius:3px;color:#0369a1}',
+        'strong{color:#0f172a}',
+        'em{color:#64748b;font-style:normal;font-size:11px}',
+        'hr{border:none;border-top:1px solid #e2e8f0;margin:20px 0}',
+        '.toolbar{position:sticky;top:0;background:rgba(248,250,252,.96);',
+        '         backdrop-filter:blur(8px);border-bottom:1px solid #e2e8f0;',
+        '         padding:10px 48px;display:flex;gap:10px;align-items:center;',
+        '         font-size:12px;color:#64748b;z-index:10}',
+        '.toolbar strong{color:#1e293b;font-size:13px}',
+        '.btn{padding:6px 16px;font-size:11px;font-weight:500;cursor:pointer;',
+        '     border-radius:5px;border:1px solid #e2e8f0;background:#fff;',
+        '     color:#334155;font-family:inherit;transition:all .15s}',
+        '.btn:hover{background:#f1f5f9}',
+        '.btn-primary{background:var(--col);color:#fff;border-color:var(--col)}',
+        '.btn-primary:hover{opacity:.88}',
+        '.severity{display:inline-block;padding:3px 10px;border-radius:4px;',
+        '          font-size:11px;font-weight:700;letter-spacing:.04em;',
+        '          background:var(--col);color:#fff;margin-left:8px}',
+        '@media print{.toolbar{display:none}.page{box-shadow:none;padding:20px}}',
+        '</style></head><body>',
+        '<div class="toolbar">',
+        '  <strong>' + alertId + '</strong>',
+        '  <span class="severity">' + lvl + '</span>',
+        '  <span style="flex:1"></span>',
+        '  <button class="btn" onclick="copyMD()">⎘ Copy MD</button>',
+        '  <button class="btn" onclick="window.print()">⬇ PDF</button>',
+        '  <button class="btn btn-primary" onclick="window.close()">✕ Close</button>',
+        '</div>',
+        '<div class="page">',
+        body,
+        '</div>',
+        '<script>',
+        'const _md = `' + mdEsc + '`;',
+        'function copyMD(){ navigator.clipboard.writeText(_md).then(()=>{',
+        '  const b=document.querySelector(".btn"); const t=b.textContent;',
+        '  b.textContent="Copied!"; setTimeout(()=>b.textContent=t,1500); }); }',
+        '<\/script>',
+        '</body></html>'
+    ].join('\n');
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('Allow pop-ups to open the report in a new tab'); return; }
+    w.document.write(html);
+    w.document.close();
+}
+
+function closeReportModal() {
+    document.getElementById('report-modal').style.display = 'none';
+}
+
+function downloadMD() {
+    if (!_md) return;
+    const alertId = document.getElementById('modal-alert-id').textContent || 'report';
+    const blob = new Blob([_md], {type:'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'threat_report_' + alertId + '.md';
+    a.click();
+}
+
+function downloadPDF() {
+    if (!_md) return;
+    const a   = (_rData && _rData.analysis) ? _rData.analysis : {};
+    const lvl = (a.threat_level||'MEDIUM').toUpperCase();
+    const colMap = {CRITICAL:'#c0392b',HIGH:'#d35400',MEDIUM:'#2471a3',LOW:'#1e8449'};
+    const col = colMap[lvl] || '#2c3e50';
+    const alertId = document.getElementById('modal-alert-id').textContent || 'report';
+    const body = mdToHtml(_md);
+    const html = [
+        '<!DOCTYPE html><html><head><meta charset="utf-8">',
+        '<title>' + alertId + ' — IoT Threat Report</title>',
+        '<style>',
+        'body{font-family:Georgia,"Times New Roman",serif;font-size:11px;line-height:1.9;',
+        '     color:#1a1a2e;background:#fff;padding:32px 44px;max-width:720px;margin:0 auto}',
+        'h1{font-size:16px;color:' + col + ';border-bottom:2px solid ' + col + ';padding-bottom:6px;margin-bottom:18px}',
+        'h2{font-size:12px;color:#2c3e50;text-transform:uppercase;letter-spacing:.05em;',
+        '   border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:22px}',
+        'h3{font-size:11px;color:#555;margin-top:14px}',
+        'table{width:100%;border-collapse:collapse;margin:10px 0;font-size:10.5px}',
+        'td{padding:5px 8px;border:1px solid #ddd;vertical-align:top}',
+        'tr:first-child td{background:#f5f7fa;font-weight:bold}',
+        'ul{margin:6px 0;padding-left:18px}li{margin:3px 0}',
+        'code{font-family:Courier,monospace;background:#f5f5f5;padding:1px 4px;border-radius:2px;font-size:10px}',
+        'strong{color:#1a1a2e}',
+        'hr{border:none;border-top:1px solid #ddd;margin:16px 0}',
+        'em{color:#555}',
+        '.btn{display:block;margin:16px auto 24px;padding:8px 24px;font-family:inherit;',
+        '     font-size:11px;cursor:pointer;background:' + col + ';color:#fff;border:none;border-radius:4px}',
+        '@page{margin:20mm}',
+        '@media print{.btn{display:none}body{padding:0}}',
+        '</style></head><body>',
+        '<button class="btn" onclick="window.print()">⬇ Save as PDF</button>',
+        body,
+        '</body></html>'
+    ].join('\n');
+    const w = window.open('', '_blank');
+    if (!w) { alert('Please allow pop-ups to download PDF'); return; }
+    w.document.write(html);
+    w.document.close();
+}
+
 </script>
+
+<!-- ── Threat Report Modal ── -->
+<div id="report-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.78);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeReportModal()">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                width:min(760px,95vw);max-height:88vh;display:flex;flex-direction:column;
+                background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--radius);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:12px 18px;border-bottom:1px solid var(--border);
+                    background:rgba(0,0,0,.2);flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-hi);font-weight:500">Threat Report</span>
+                <span id="modal-alert-id" style="font-family:var(--mono);font-size:.6rem;color:var(--purple)"></span>
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btnb" style="font-size:.58rem" onclick="downloadMD()">⬇ .md</button>
+                <button class="btn btnb" style="font-size:.58rem" onclick="downloadPDF()">⬇ PDF</button>
+                <button class="btn" style="font-size:.58rem" onclick="closeReportModal()">✕ Close</button>
+            </div>
+        </div>
+        <div id="report-modal-body" style="overflow-y:auto;padding:24px 32px;flex:1;
+             font-family:var(--sans);font-size:.72rem;line-height:1.8;color:var(--text)">
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
