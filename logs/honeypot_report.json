@@ -1,0 +1,320 @@
+{
+  "generated_at": "2026-09-28 13:43:27.464608",
+  "total_sessions": 6,
+  "sessions": [
+    {
+      "record": {
+        "timestamp": "2026-08-07 07:20:08.309936",
+        "req_id": 1786067265080,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 46398,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "honeypot_engagement": {
+          "source": "honeypot_llm",
+          "log_line": "[config]",
+          "status": "warn",
+          "format": "freeform"
+        },
+        "analysis": {
+          "req_id": "1786067265080",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Path targets known vulnerable endpoint (.git/config) likely indicative of CVE probe",
+            "Prior suspicious requests from this IP (3) and no benign requests, suggesting malicious intent"
+          ],
+          "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns",
+          "attack_hypothesis": "cve_probe",
+          "threat_level": "high",
+          "recommended_action": "Block the source IP and perform further analysis to confirm the attack vector",
+          "confidence": 85,
+          "analysis_source": "gateway_llm"
+        }
+      },
+      "analysis": {
+        "req_id": "1786067265080",
+        "src_ip": "127.0.0.1",
+        "why_suspicious": [
+          "Path targets known vulnerable endpoint (.git/config) likely indicative of CVE probe",
+          "Prior suspicious requests from this IP (3) and no benign requests, suggesting malicious intent"
+        ],
+        "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns",
+        "attack_hypothesis": "cve_probe",
+        "threat_level": "high",
+        "recommended_action": "Block the source IP and perform further analysis to confirm the attack vector",
+        "confidence": 85,
+        "analysis_source": "gateway_llm",
+        "error": "Expecting ',' delimiter: line 10 column 181 (char 831)",
+        "source": "fallback_existing"
+      },
+      "analysed_at": "2026-09-28 11:46:05.762039"
+    },
+    {
+      "record": {
+        "timestamp": "2026-09-28 10:06:28.689832",
+        "req_id": 1790570074797,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 48346,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "honeypot_engagement": {
+          "source": "honeypot_llm",
+          "log_line": "<!DOCTYPE html>",
+          "status": "warn",
+          "format": "freeform"
+        },
+        "analysis": {
+          "req_id": "1790570074797",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Targeted administrative interface /api/pipeline-stream with potential PHPMyAdmin exploitation.",
+            "Prior suspicious requests from this IP: 2, indicating a possible reconnaissance or credential attack."
+          ],
+          "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+          "attack_hypothesis": "recon",
+          "threat_level": "medium",
+          "recommended_action": "Block the source IP and investigate further for potential exploitation attempts.",
+          "confidence": 85,
+          "analysis_source": "gateway_llm"
+        }
+      },
+      "analysis": {
+        "req_id": "1790570074797",
+        "src_ip": "127.0.0.1",
+        "why_suspicious": [
+          "Targeted administrative interface /api/pipeline-stream with potential PHPMyAdmin exploitation.",
+          "Prior suspicious requests from this IP: 2, indicating a possible reconnaissance or credential attack."
+        ],
+        "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+        "attack_hypothesis": "recon",
+        "threat_level": "medium",
+        "recommended_action": "Block the source IP and investigate further for potential exploitation attempts.",
+        "confidence": 85,
+        "analysis_source": "gateway_llm",
+        "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+        "source": "fallback_existing"
+      },
+      "analysed_at": "2026-09-28 11:46:34.493928"
+    },
+    {
+      "record": {
+        "timestamp": "2026-06-26 18:13:40.564930",
+        "req_id": 1782477685310,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 47298,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "analysis": {
+          "req_id": "1782477685310",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Path contains traversal patterns, indicating a potential path_traversal attack.",
+            "Prior suspicious requests from this IP: 2"
+          ],
+          "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+          "attack_hypothesis": "path_traversal",
+          "threat_level": "medium",
+          "recommended_action": "Block the source IP and investigate further for potential exploitation.",
+          "confidence": 80,
+          "analysis_source": "gateway_fallback"
+        }
+      },
+      "analysis": {
+        "threat_level": "critical",
+        "attack_type": "Path Traversal",
+        "attacker_intent": "The attacker was attempting to traverse the IoT device's file system.",
+        "why_suspicious": [
+          "Path contains traversal patterns",
+          "Prior suspicious requests from this IP: 2"
+        ],
+        "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+        "attack_hypothesis": "path_traversal",
+        "recommended_action": "Block the source IP and investigate further for potential exploitation.",
+        "confidence": 80,
+        "severity_reasoning": "The threat level is critical due to the potential for unauthorized access and data exfiltration."
+      },
+      "analysed_at": "2026-09-28 11:52:22.268207"
+    },
+    {
+      "record": {
+        "timestamp": "2026-08-26 16:24:05.374624",
+        "req_id": 1787741495148,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 38684,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "honeypot_engagement": {
+          "source": "honeypot_llm",
+          "log_line": "<!DOCTYPE html>",
+          "status": "warn",
+          "format": "freeform"
+        },
+        "analysis": {
+          "req_id": "1787741495148",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Path targets known vulnerable endpoint /api/pipeline-stream, likely cve_probe.",
+            "Prior suspicious requests from this IP: 2"
+          ],
+          "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+          "attack_hypothesis": "cve_probe",
+          "threat_level": "medium",
+          "recommended_action": "Block the source IP and perform further analysis to confirm the attack vector.",
+          "confidence": 80,
+          "analysis_source": "gateway_llm"
+        }
+      },
+      "analysis": {
+        "req_id": "1787741495148",
+        "src_ip": "127.0.0.1",
+        "why_suspicious": [
+          "Path targets known vulnerable endpoint /api/pipeline-stream, likely cve_probe.",
+          "Prior suspicious requests from this IP: 2"
+        ],
+        "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+        "attack_hypothesis": "cve_probe",
+        "threat_level": "medium",
+        "recommended_action": "Block the source IP and perform further analysis to confirm the attack vector.",
+        "confidence": 80,
+        "analysis_source": "gateway_llm",
+        "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+        "source": "fallback_existing"
+      },
+      "analysed_at": "2026-09-28 12:08:28.691076"
+    },
+    {
+      "record": {
+        "timestamp": "2026-08-26 07:46:10.122219",
+        "req_id": 1787710408025,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 53352,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "honeypot_engagement": {
+          "source": "honeypot_llm",
+          "log_line": "<!DOCTYPE html>",
+          "status": "warn",
+          "format": "freeform"
+        },
+        "analysis": {
+          "req_id": "1787710408025",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Unusual query parameter syntax, potentially indicative of SQL injection",
+            "Multiple suspicious requests from this IP in a short timeframe"
+          ],
+          "benign_baseline_comparison": "This request does not match typical IoT device traffic patterns",
+          "attack_hypothesis": "sqli",
+          "threat_level": "medium",
+          "recommended_action": "Block further requests from this IP and initiate incident response procedures",
+          "confidence": 80,
+          "analysis_source": "gateway_llm"
+        }
+      },
+      "analysis": {
+        "req_id": "1787710408025",
+        "src_ip": "127.0.0.1",
+        "why_suspicious": [
+          "Unusual query parameter syntax, potentially indicative of SQL injection",
+          "Multiple suspicious requests from this IP in a short timeframe"
+        ],
+        "benign_baseline_comparison": "This request does not match typical IoT device traffic patterns",
+        "attack_hypothesis": "sqli",
+        "threat_level": "medium",
+        "recommended_action": "Block further requests from this IP and initiate incident response procedures",
+        "confidence": 80,
+        "analysis_source": "gateway_llm",
+        "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+        "source": "fallback_existing"
+      },
+      "analysed_at": "2026-09-28 13:15:55.766750"
+    },
+    {
+      "record": {
+        "timestamp": "2026-08-26 10:20:00.636755",
+        "req_id": 1787719686630,
+        "src_ip": "127.0.0.1",
+        "flow": {
+          "src_port": 44242,
+          "dst_port": 8080,
+          "protocol": 6,
+          "conn_state": "SF",
+          "packet_count": 1
+        },
+        "honeypot_engagement": {
+          "source": "honeypot_llm",
+          "log_line": "<!DOCTYPE html>",
+          "status": "warn",
+          "format": "freeform"
+        },
+        "analysis": {
+          "req_id": "1787719686630",
+          "src_ip": "127.0.0.1",
+          "why_suspicious": [
+            "Path contains traversal patterns, indicating a potential path_traversal attack.",
+            "Prior suspicious requests from this IP: 1"
+          ],
+          "benign_baseline_comparison": "This request deviates significantly from normal IoT traffic patterns.",
+          "attack_hypothesis": "path_traversal",
+          "threat_level": "high",
+          "recommended_action": "Block the source IP and investigate further for potential exploitation.",
+          "confidence": 90,
+          "analysis_source": "gateway_llm"
+        }
+      },
+      "analysis": {
+        "alert_id": "IDS-20260826-686630",
+        "threat_level": "HIGH",
+        "attack_type": "Path Traversal",
+        "confidence": 80,
+        "status": "INVESTIGATING",
+        "summary": "A potential path traversal attack was detected on IoT device, targeting port 8080. The attacker's intent is unclear, but the risk to this device is high.",
+        "attacker_intent": "The attacker was attempting to traverse the file system or directory structure of the IoT device.",
+        "key_findings": [
+          "A single packet with traversal patterns was observed in the request payload.",
+          "This is the first suspicious request from this IP address.",
+          "The connection state is SF, indicating a successful connection.",
+          "The honeypot returned a warning response to the attacker.",
+          "This request deviates significantly from normal IoT traffic patterns on port 8080."
+        ],
+        "why_suspicious": [
+          "Path contains traversal patterns, indicating a potential path_traversal attack.",
+          "Prior suspicious requests from this IP: 1"
+        ],
+        "benign_baseline_comparison": "Normal traffic on port 8080 from IoT devices typically involves small packet sizes and specific protocol headers, whereas this request has unusual traversal patterns.",
+        "attack_hypothesis": "The attacker is likely using a path traversal technique to attempt to access or modify sensitive files or directories on the IoT device.",
+        "severity_reasoning": "This threat level was chosen due to the high confidence in the detection of a potential attack and the risk to the IoT device's security.",
+        "recommended_action": "Step 1: Block incoming traffic from this IP address. Step 2: Conduct a thorough analysis of the request payload and system logs. Step 3: Implement additional security measures to prevent future attacks.",
+        "ioc": {
+          "src_ip": "127.0.0.1",
+          "src_port": "44242",
+          "dst_port": "8080",
+          "protocol": "TCP",
+          "conn_state": "SF",
+          "packet_count": "1"
+        }
+      },
+      "analysed_at": "2026-09-28 13:43:27.463713"
+    }
+  ]
+}

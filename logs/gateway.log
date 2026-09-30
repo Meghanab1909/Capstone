@@ -188,3 +188,5 @@
 {"timestamp": "2026-08-26 10:18:09.610437", "req_id": 1787719686630, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5002", "pool": "honeypot", "cluster": 1}
 {"timestamp": "2026-08-26 16:13:35.710286", "req_id": 1787741011707, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://127.0.0.1:5000", "pool": "real", "cluster": 1}
 {"timestamp": "2026-08-26 16:21:39.433981", "req_id": 1787741495148, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5004", "pool": "honeypot", "cluster": 2}
+{"timestamp": "2026-09-28 10:00:07.722103", "req_id": 1790569804943, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5002", "pool": "honeypot", "cluster": 1}
+{"timestamp": "2026-09-28 10:04:38.255402", "req_id": 1790570074797, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5004", "pool": "honeypot", "cluster": 2}
