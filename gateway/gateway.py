@@ -19,32 +19,59 @@ _ai_lock = threading.Lock()
 LABELED_CSV     = "logs/traffic_labeled.csv"
 GATEWAY_LOG     = "logs/gateway.log"
 AI_ANALYSIS_LOG = "logs/ai_analysis.log"
-AI_SCRIPT       = "/home/meghana/iot-honeynet/ai_engine/hybrid_ai.py"
+AI_SCRIPT       = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ai_engine", "hybrid_ai.py")
 GATEWAY_IP = socket.gethostbyname(socket.gethostname())
 
 # -----------------------------------------------------------------------
 # SERVER POOLS
-# gateway.py runs on the HOST. Containers are reachable via 127.0.0.1
-# on their mapped host ports.
 #
-#   real_iot_c1  → 127.0.0.1:5000  (container :5000)
-#   real_iot_c2  → 127.0.0.1:5003  (container :5000)
-#   real_iot_c3  → 127.0.0.1:5006  (container :5000)
-#   real_iot_c4  → 127.0.0.1:5009  (container :5000)
-#   honeypot_c1  → 127.0.0.1:5002  (container :80 — beelzebub)
-#   honeypot_c2  → 127.0.0.1:5004  (container :80 — beelzebub)
-#   dummy_iot_c1 → 127.0.0.1:5001  (container :5001)
+# Dual-mode: when running containerised (via docker-compose) the env vars
+# REAL_SERVERS / HONEYPOT_SERVERS / DUMMY_SERVERS are injected with
+# Docker service-name URLs (e.g. http://real_iot_c1:5000).
+#
+# When running directly on the HOST the env vars are absent and the
+# fallback list uses 127.0.0.1 + mapped host ports — same behaviour
+# as before containerisation.
+#
+# Containerised layout (all ports internal, no host binding):
+#   real_iot_c1..c6  → http://real_iot_c{n}:5000
+#   honeypot_c1..c3  → http://honeypot_c{n}:80
+#   dummy_iot_c1..c3 → http://dummy_iot_c{n}:5001
+#
+# Host-direct fallback layout (ports mapped to host):
+#   real_iot_c1  → 127.0.0.1:5000   real_iot_c4  → 127.0.0.1:5009
+#   real_iot_c2  → 127.0.0.1:5003   real_iot_c5  → 127.0.0.1:5012
+#   real_iot_c3  → 127.0.0.1:5006   real_iot_c6  → 127.0.0.1:5015
+#   honeypot_c1  → 127.0.0.1:5002   honeypot_c3  → 127.0.0.1:5005
+#   honeypot_c2  → 127.0.0.1:5004
+#   dummy_iot_c1 → 127.0.0.1:5001   dummy_iot_c2 → 127.0.0.1:5007
+#   dummy_iot_c3 → 127.0.0.1:5008
 # -----------------------------------------------------------------------
-REAL_SERVERS     = ["http://127.0.0.1:5000", "http://127.0.0.1:5003",
-                    "http://127.0.0.1:5006", "http://127.0.0.1:5009"]
-HONEYPOT_SERVERS = ["http://127.0.0.1:5002", "http://127.0.0.1:5004"]
-DUMMY_SERVERS    = ["http://127.0.0.1:5001"]
+def _parse_servers(env_key, fallback):
+    """Read a comma-separated URL list from an env var; fall back to list."""
+    val = os.environ.get(env_key, "")
+    return [s.strip() for s in val.split(",") if s.strip()] or fallback
+
+REAL_SERVERS     = _parse_servers("REAL_SERVERS", [
+    "http://127.0.0.1:5000", "http://127.0.0.1:5003",
+    "http://127.0.0.1:5006", "http://127.0.0.1:5009",
+    "http://127.0.0.1:5012", "http://127.0.0.1:5015",
+])
+HONEYPOT_SERVERS = _parse_servers("HONEYPOT_SERVERS", [
+    "http://127.0.0.1:5002", "http://127.0.0.1:5004", "http://127.0.0.1:5005",
+])
+DUMMY_SERVERS    = _parse_servers("DUMMY_SERVERS", [
+    "http://127.0.0.1:5001", "http://127.0.0.1:5007", "http://127.0.0.1:5008",
+])
 
 # -----------------------------------------------------------------------
-# Ollama — runs on the HOST, called directly from gateway.py
-# (gateway.py is also on the host so localhost works fine here)
+# Ollama
+# • Containerised: gateway reaches the HOST via host.docker.internal:11434
+#   (injected by extra_hosts in docker-compose.yml)
+# • Host-direct: localhost works as before
 # -----------------------------------------------------------------------
-OLLAMA_URL   = "http://127.0.0.1:11434/v1/chat/completions"
+_ollama_host = os.environ.get("OLLAMA_HOST", "127.0.0.1")
+OLLAMA_URL   = f"http://{_ollama_host}:11434/v1/chat/completions"
 OLLAMA_MODEL = "llama3:latest"   # must match `ollama list` output exactly
 
 _rr_index  = {"real": 0, "honeypot": 0, "dummy": 0}
@@ -107,10 +134,11 @@ def check_pool(name, servers):
 
 def check_ollama(retries=5, delay=3):
     '''Wait for Ollama to be ready — avoids race condition at startup.'''
-    print("Ollama (127.0.0.1:11434):")
+    ollama_base = f"http://{_ollama_host}:11434"
+    print(f"Ollama ({ollama_base}):")
     for attempt in range(retries):
         try:
-            r = requests.get("http://127.0.0.1:11434/api/tags", timeout=(3, 5))
+            r = requests.get(f"{ollama_base}/api/tags", timeout=(3, 5))
             data = r.json()
             if not isinstance(data, dict):
                 raise ValueError(f"unexpected response type: {type(data)}")
@@ -472,6 +500,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         return self.rfile.read(n) if n > 0 else b""
         
+    def _is_healthcheck(self):
+        """Return True for internal health probe paths — skip all logging/AI."""
+        return self.path.rstrip("/") in ("/health", "/gateway-health", "/ping")
+
     def run_pipeline(self, method, forward_path=None):
         fp = forward_path if forward_path is not None else self.path
         client_ip = self.client_address[0]
@@ -590,6 +622,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
         yield "complete", {"content": content}
 
     def _handle(self, method: str):
+        # Silent health probe — bypass pipeline entirely
+        if self._is_healthcheck():
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"ok")
+            return
+
         content = None
         for stage, data in self.run_pipeline(method):
             if stage == "complete":
