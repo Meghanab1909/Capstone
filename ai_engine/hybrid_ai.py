@@ -2,12 +2,20 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import warnings
+
+from sklearn.exceptions import InconsistentVersionWarning
+warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 from sklearn.ensemble import IsolationForest
 
 # ── Paths ────────────────────────────────────────────────────────────────────
-CSV_PATH   = "logs/traffic_labeled.csv"
-MODEL_PATH = "/home/meghana/iot-honeynet/ai_engine/rf_gateway.pkl"
+# Resolve relative to this file so paths work both on the host
+# (/home/meghana/iot-honeynet/...) and inside the container (/app/...).
+_HERE      = os.path.dirname(os.path.abspath(__file__))
+_ROOT      = os.path.dirname(_HERE)          # one level up from ai_engine/
+CSV_PATH   = os.path.join(_ROOT, "logs", "traffic_labeled.csv")
+MODEL_PATH = os.path.join(_HERE, "rf_gateway.pkl")
 
 # How many recent labeled rows to use for IsolationForest training
 UNSUP_WINDOW = 200
