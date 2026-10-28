@@ -1,66 +1,347 @@
-version: "3.8"
+# =========================================================================
+# IoT Honeynet — 3-Network Isolated Architecture
+#
+#  ┌─────────────────────────────────────────────────────────────────────┐
+#  │  public_net  (internet-facing)                                      │
+#  │    nginx  ←── sole host-bound port :80                             │
+#  └──────────────────┬──────────────────────────────────────────────────┘
+#                     │ gateway_net
+#  ┌──────────────────▼──────────────────────────────────────────────────┐
+#  │  gateway_net  (nginx ↔ gateway only)                                │
+#  │    nginx + gateway                                                   │
+#  └──────────────────┬──────────────────────────────────────────────────┘
+#                     │ iot_net
+#  ┌──────────────────▼──────────────────────────────────────────────────┐
+#  │  iot_net  (gateway ↔ devices only — no external access)            │
+#  │    gateway + all IoT / honeypot / dummy containers                  │
+#  └─────────────────────────────────────────────────────────────────────┘
+#
+#  Security: device containers have NO host-bound ports (expose: only).
+#  An attacker cannot reach :5000–:5015 from outside — ever.
+#  Nginx is the only way in.
+#
+#  Ollama runs on the HOST. gateway + honeypots reach it via
+#  host.docker.internal (injected by extra_hosts below).
+# =========================================================================
 
 services:
-  real_iot_front:
-    build:
-      context: .
-      dockerfile: docker/iot.Dockerfile
+
+  # =======================================================================
+  # NGINX — Virtual Layer (sole internet-facing container)
+  # =======================================================================
+  nginx:
+    image: nginx:1.25-alpine
     ports:
-      - "5000:5000"
+      - "0.0.0.0:80:80"            # ← ONLY host-bound port in the whole stack
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - iotnet
+      - public_net
+      - gateway_net
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
-  real_iot:
+  # =======================================================================
+  # GATEWAY — Classification + Load Balancer (internal only)
+  # =======================================================================
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+    expose:
+      - "8080"                      # visible to nginx via gateway_net only
+    environment:
+      # Inside the container, reach IoT nodes by service name on iot_net
+      - REAL_SERVERS=http://real_iot_c1:5000,http://real_iot_c2:5000,http://real_iot_c3:5000,http://real_iot_c4:5000,http://real_iot_c5:5000,http://real_iot_c6:5000
+      - HONEYPOT_SERVERS=http://honeypot_c1:80,http://honeypot_c2:80,http://honeypot_c3:80
+      - DUMMY_SERVERS=http://dummy_iot_c1:5001,http://dummy_iot_c2:5001,http://dummy_iot_c3:5001
+      - OLLAMA_HOST=host.docker.internal   # Ollama runs on the host, not in Docker
+    volumes:
+      - ./logs:/app/logs
+      - ./ai_engine:/app/ai_engine  # live-reload models without rebuild
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach Ollama on host :11434
+    networks:
+      - public_net      # needs outbound access to reach Ollama on the host
+      - gateway_net
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # =======================================================================
+  # REAL IoT DEVICES — 6 nodes (iot_net only, no host ports)
+  # =======================================================================
+  real_iot_c1:
     build:
       context: .
       dockerfile: docker/iot.Dockerfile
-    expose:
-      - "5000"
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c1
+      - CLUSTER=1
     networks:
-      - iotnet
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  honeypot_front:
-    image: beelzebub
-    ports:          
-      - "5002:80"
-    volumes:
-      - ./honeypot/beelzebub/configurations:/configurations
-    command:
-      - -confCore
-      - /configurations/beelzebub.yaml
+  real_iot_c2:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c2
+      - CLUSTER=2
     networks:
-      - iotnet
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  honeypot:
+  real_iot_c3:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c3
+      - CLUSTER=3
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  real_iot_c4:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c4
+      - CLUSTER=4
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  real_iot_c5:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c5
+      - CLUSTER=5
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  real_iot_c6:
+    build:
+      context: .
+      dockerfile: docker/iot.Dockerfile
+    expose: ["5000"]
+    environment:
+      - NODE_ID=real_c6
+      - CLUSTER=6
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # =======================================================================
+  # HONEYPOT DEVICES — 3 nodes (iot_net only, no host ports)
+  # =======================================================================
+  honeypot_c1:
     image: beelzebub
     expose:
-      - "22"
       - "80"
+      - "2222"
     volumes:
       - ./honeypot/beelzebub/configurations:/configurations
+      - ./logs/beelzebub:/logs
     command:
       - -confCore
       - /configurations/beelzebub.yaml
+    environment:
+      - NODE_ID=honeypot_c1
+      - CLUSTER=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - iotnet
-  
-  dummy_iot_front:
-    build:
-      context: .
-      dockerfile: docker/dummy.Dockerfile
-    ports:
-      - "5001:5001"      
-    networks:
-      - iotnet
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
-  dummy_iot:
-    build:
-      context: .
-      dockerfile: docker/dummy.Dockerfile
+  honeypot_c2:
+    image: beelzebub
     expose:
-      - "5001"
+      - "80"
+      - "2222"
+    volumes:
+      - ./honeypot/beelzebub/configurations:/configurations
+      - ./logs/beelzebub:/logs
+    command:
+      - -confCore
+      - /configurations/beelzebub.yaml
+    environment:
+      - NODE_ID=honeypot_c2
+      - CLUSTER=2
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - iotnet
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
+  honeypot_c3:
+    image: beelzebub
+    expose:
+      - "80"
+      - "2222"
+    volumes:
+      - ./honeypot/beelzebub/configurations:/configurations
+      - ./logs/beelzebub:/logs
+    command:
+      - -confCore
+      - /configurations/beelzebub.yaml
+    environment:
+      - NODE_ID=honeypot_c3
+      - CLUSTER=3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # =======================================================================
+  # DUMMY IoT DEVICES — 3 nodes (iot_net only, no host ports)
+  # =======================================================================
+  dummy_iot_c1:
+    build:
+      context: .
+      dockerfile: docker/dummy.Dockerfile
+    expose: ["5001"]
+    environment:
+      - NODE_ID=dummy_c1
+      - CLUSTER=1
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  dummy_iot_c2:
+    build:
+      context: .
+      dockerfile: docker/dummy.Dockerfile
+    expose: ["5001"]
+    environment:
+      - NODE_ID=dummy_c2
+      - CLUSTER=2
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  dummy_iot_c3:
+    build:
+      context: .
+      dockerfile: docker/dummy.Dockerfile
+    expose: ["5001"]
+    environment:
+      - NODE_ID=dummy_c3
+      - CLUSTER=3
+    networks:
+      - iot_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# =========================================================================
+# NETWORKS — 3-tier isolation
+# =========================================================================
 networks:
-  iotnet:
+  public_net:
+    driver: bridge
+    name: honeynet_public
+  gateway_net:
+    driver: bridge
+    name: honeynet_gateway
+    internal: true          # no external routing — gateway_net is LAN only
+  iot_net:
+    driver: bridge
+    name: honeynet_iot
+    internal: true          # completely isolated — containers only
