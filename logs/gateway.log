@@ -190,3 +190,7 @@
 {"timestamp": "2026-08-26 16:21:39.433981", "req_id": 1787741495148, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5004", "pool": "honeypot", "cluster": 2}
 {"timestamp": "2026-09-28 10:00:07.722103", "req_id": 1790569804943, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5002", "pool": "honeypot", "cluster": 1}
 {"timestamp": "2026-09-28 10:04:38.255402", "req_id": 1790570074797, "src_ip": "127.0.0.1", "ai_label": "suspicious", "decision": "redirect", "forward_to": "http://127.0.0.1:5004", "pool": "honeypot", "cluster": 2}
+{"timestamp": "2026-10-20 15:29:47.969818", "req_id": 1792510185595, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://real_iot_c3:5000", "pool": "real", "cluster": 3}
+{"timestamp": "2026-10-20 15:30:00.067857", "req_id": 1792510198041, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://real_iot_c4:5000", "pool": "real", "cluster": 4}
+{"timestamp": "2026-10-20 15:30:12.114671", "req_id": 1792510210135, "src_ip": "127.0.0.1", "ai_label": "benign", "decision": "allow", "forward_to": "http://real_iot_c5:5000", "pool": "real", "cluster": 5}
+{"timestamp": "2026-10-20 15:37:06.072718", "req_id": 1792510624147, "src_ip": "172.20.0.3", "ai_label": "benign", "decision": "allow", "forward_to": "http://real_iot_c1:5000", "pool": "real", "cluster": 1}
